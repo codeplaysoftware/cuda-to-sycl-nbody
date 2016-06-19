@@ -107,6 +107,8 @@ int main()
 
   glfwMakeContextCurrent(window);
 
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
   // OpenGL initialization
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -165,18 +167,13 @@ int main()
   program_source(program_disp, GL_GEOMETRY_SHADER, "main.geom");
   program_link(program_disp);
 
-  glm::mat4 view_mat = glm::lookAt(
-    glm::vec3(100,100,100),
-    glm::vec3(0,0,0),
-    glm::vec3(0,0,1));
-  glm::mat4 proj_mat = glm::infinitePerspective(
-    glm::radians(30.0f),mode->width/(float)mode->height, 1.f);
-
+  // Uniforms
   glProgramUniform1f(program_interaction, 0, frame_time);
   glProgramUniform1f(program_interaction, 1, G);
 
   glProgramUniform1f(program_integration, 0, frame_time);
 
+  // SSBO binding
   glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, vbo, 
     0, sizeof(glm::vec4)*NUM_PARTICLES);
   glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 1, velocities,
@@ -186,12 +183,55 @@ int main()
 
   int iterations_per_frame = MAX_ITERATIONS_PER_FRAME;
 
+  float view_theta = 0.0;
+  float view_phi = 0.0;
+
+  glm::vec3 view_pos = glm::vec3(100,100,100);
+
+  double xmid = mode->width  / 2;
+  double ymid = mode->height / 2;
+
+  double sensibility = 0.002;
+  float move_speed = 0.5;
+
   // Main loop
   while (!glfwWindowShouldClose(window) && 
     glfwGetKey(window, GLFW_KEY_ESCAPE)==GLFW_RELEASE)
   {
     double frame_start = glfwGetTime();
-  
+
+    double xpos,ypos;
+    double xdiff, ydiff;
+    glfwGetCursorPos(window, &xpos, &ypos);
+    xdiff = xpos - xmid;
+    ydiff = ypos - ymid;
+    glfwSetCursorPos(window, xmid, ymid);
+
+    view_theta -= xdiff*sensibility;
+    view_phi -= ydiff*sensibility;
+
+    view_phi = std::max(-(float)M_PI/2+0.0001f, std::min(view_phi, (float)M_PI/2-0.0001f));
+
+    glm::vec3 dir = glm::vec3(cos(view_theta)*cos(view_phi), sin(view_theta)*cos(view_phi), sin(view_phi));
+    glm::vec3 right = glm::normalize(glm::cross(dir,glm::vec3(0,0,1)));
+    glm::vec3 up = glm::normalize(glm::cross(right, dir));
+
+    if (glfwGetKey(window, GLFW_KEY_W))
+      view_pos += move_speed*dir;
+    else if (glfwGetKey(window, GLFW_KEY_S))
+      view_pos -= move_speed*dir;
+    if (glfwGetKey(window, GLFW_KEY_D))
+      view_pos += move_speed*right;
+    else if (glfwGetKey(window, GLFW_KEY_A))
+      view_pos -= move_speed*right;
+
+     glm::mat4 view_mat = glm::lookAt(
+      view_pos,
+      view_pos+dir,
+      glm::vec3(0,0,1));
+    glm::mat4 proj_mat = glm::infinitePerspective(
+    glm::radians(30.0f),mode->width/(float)mode->height, 1.f);
+
     for (int i=0;i<iterations_per_frame;++i)
     {
       glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
