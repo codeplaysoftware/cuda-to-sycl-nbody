@@ -1,0 +1,49 @@
+#version 450 core
+
+#define EPS2 0.000001
+
+layout (location = 0) uniform float dt;
+layout (location = 1) uniform float G; 
+
+layout (local_size_x = 256) in;
+
+layout (binding = 0, std430) buffer particles_in
+{
+  vec4 part_in[];
+};
+
+layout (binding = 1, std430) buffer particles_vel
+{
+  vec4 part_vel[];
+};
+
+shared vec4 cache[gl_WorkGroupSize.x];
+
+vec3 interaction(in vec4 p1,in vec4 p2)
+{
+  vec3 r = p2.xyz - p1.xyz;
+  float dist_sqr = dot(r,r) + EPS2;
+  float dist_sixth = dist_sqr*dist_sqr*dist_sqr;
+  float inv_dist_cube = inversesqrt(dist_sixth);
+  return r*p2.w*inv_dist_cube;
+}
+
+void main()
+{
+  uint id = gl_GlobalInvocationID.x;
+  vec4 p1 = part_in[id];
+  vec3 pos = p1.xyz;
+  vec3 vel = vec3(0.0);
+  for (uint i=0;i<gl_NumWorkGroups.x*gl_WorkGroupSize.x;i+=gl_WorkGroupSize.x)
+  {
+    cache[gl_LocalInvocationIndex] = part_in[i+gl_LocalInvocationIndex];
+    groupMemoryBarrier();
+    barrier();
+    for (int j=0;j<gl_WorkGroupSize.x;++j)
+    {
+      vel += interaction(p1, cache[j]);
+    }
+  }
+  vec3 final_vel = dt*vel*G+part_vel[id].xyz;
+  part_vel[id] = vec4(final_vel,0.0);
+}

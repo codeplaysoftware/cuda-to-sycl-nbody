@@ -14,7 +14,7 @@ CXXFLAGS=-W -std=c++11 -D_USE_MATH_DEFINES -Iinclude/
 LIBS=glfw3
 
 INCLUDE=`pkg-config glm $(LIBS) --cflags`
-LDFLAGS=-pthread `pkg-config $(LIBS) --libs`
+LDFLAGS=`pkg-config $(LIBS) --libs`
 
 ifneq ($(OS),Windows_NT)
 	LDFLAGS+= -ldl
@@ -48,14 +48,14 @@ define make_rule
 $(2): $(1)
 $(1): $(foreach dep,$(call deps,$(2)),$(OBJ_DIR)/$(dep).o)
 	@echo Building debug binary $$@...
-	$(LINK_DEBUG)
+	@$(LINK_DEBUG)
 endef
 else
 define make_rule
 $(2): $(1)
 $(1): $(foreach dep,$(call deps,$(2)),$(OBJ_DIR)/$(dep).o)
 	@echo Building release binary $$@...
-	$(LINK)
+	@$(LINK)
 endef
 endif
 
@@ -71,15 +71,15 @@ endif
 define gen_rule_cpp
 obj/%.o: $(1)/%.cpp $(PREREQ_DIR)/%.d
 	@echo Building cpp source $$<...
-	$(COMPILE.cc)
-	$(POSTCOMPILE)
+	@$(COMPILE.cc)
+	@$(POSTCOMPILE)
 endef
 
 define gen_rule_c
 obj/%.o: $(1)/%.c $(PREREQ_DIR)/%.d
 	@echo Building c source $$<...
-	$(COMPILE.c)
-	$(POSTCOMPILE)
+	@$(COMPILE.c)
+	@$(POSTCOMPILE)
 endef
 
 $(foreach dir,$(SRC_DIRS),$(eval $(call gen_rule_cpp,$(dir))))

@@ -1,4 +1,5 @@
 bin/*
 !bin/*.*
 bin/*.exe
+bin/*.trace
 obj/

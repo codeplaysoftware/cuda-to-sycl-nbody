@@ -1,0 +1,22 @@
+#version 450 core
+
+layout (location = 0) uniform float dt; 
+
+layout (local_size_x = 256) in;
+
+layout (binding = 0, std430) buffer particles_in
+{
+  vec4 part_in[];
+};
+
+layout (binding = 1, std430) buffer particles_vel
+{
+  vec4 part_vel[];
+};
+
+void main()
+{
+  uint id = gl_GlobalInvocationID.x;
+  vec4 pos = part_in[id];
+  part_in[id] = vec4(pos.xyz+dt*part_vel[id].xyz,pos.w);
+}

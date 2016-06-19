@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include <glad/glad.h>
-#include <glfw/glfw3.h>
+#include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -11,6 +11,14 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+
+#include <chrono>
+#include <thread>
+
+const float G = 10.0;
+const float frame_time = 1.0/60.0;
+const size_t NUM_PARTICLES = 8*256;
+const int MAX_ITERATIONS_PER_FRAME = 16;
 
 glm::vec4 random_particle()
 {
@@ -95,8 +103,7 @@ int main()
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  //window = glfwCreateWindow(mode->width, mode->height, "N Body simulation", monitor, NULL);
-  window = glfwCreateWindow(800, 600, "N Body simulation", NULL, NULL);
+  window = glfwCreateWindow(mode->width, mode->height, "N Body simulation", monitor, NULL);
 
   glfwMakeContextCurrent(window);
 
@@ -119,22 +126,38 @@ int main()
   glVertexArrayAttribBinding(vao, 0, 0);
 
   // SSBO init
-  const size_t NUM_PARTICLES = 8000;
-
   {
     std::vector<glm::vec4> particles_init(NUM_PARTICLES);
     for (size_t i=0;i<NUM_PARTICLES;++i)
     {
       particles_init[i] = random_particle();
     }
-    glNamedBufferData(vbo, NUM_PARTICLES*2*sizeof(glm::vec4), NULL, GL_DYNAMIC_COPY);
+    glNamedBufferData(vbo, NUM_PARTICLES*sizeof(glm::vec4), NULL, GL_DYNAMIC_COPY);
     glNamedBufferSubData(vbo, 0, NUM_PARTICLES*sizeof(glm::vec4), particles_init.data());
   }
 
+  // Velocity SSBO
+  GLuint velocities;
+  glCreateBuffers(1, &velocities);
+
+  {
+    std::vector<glm::vec4> vel_init(NUM_PARTICLES);
+    for (size_t i=0;i<NUM_PARTICLES;++i)
+    {
+      vel_init[i] = glm::vec4(0.0);
+    }
+    glNamedBufferData(velocities, NUM_PARTICLES*sizeof(glm::vec4), NULL, GL_DYNAMIC_COPY);
+    glNamedBufferSubData(velocities, 0, NUM_PARTICLES*sizeof(glm::vec4), vel_init.data());
+  }
+
   // Shader program
-  GLuint program_comp = glCreateProgram();
-  program_source(program_comp, GL_COMPUTE_SHADER, "main.comp");
-  program_link(program_comp);
+  GLuint program_interaction = glCreateProgram();
+  program_source(program_interaction, GL_COMPUTE_SHADER, "interaction.comp");
+  program_link(program_interaction);
+
+  GLuint program_integration = glCreateProgram();
+  program_source(program_integration, GL_COMPUTE_SHADER, "integration.comp");
+  program_link(program_integration);
 
   GLuint program_disp = glCreateProgram();
   program_source(program_disp, GL_VERTEX_SHADER  , "main.vert");
@@ -142,45 +165,60 @@ int main()
   program_source(program_disp, GL_GEOMETRY_SHADER, "main.geom");
   program_link(program_disp);
 
-  GLuint program_pipeline;
-  glCreateProgramPipelines(1, &program_pipeline);
-  glUseProgramStages(program_pipeline, GL_COMPUTE_SHADER_BIT, program_comp);
-  glUseProgramStages(program_pipeline, 
-    GL_VERTEX_SHADER_BIT|GL_GEOMETRY_SHADER_BIT|GL_FRAGMENT_SHADER_BIT,
-    program_disp);
+  glm::mat4 view_mat = glm::lookAt(
+    glm::vec3(100,100,100),
+    glm::vec3(0,0,0),
+    glm::vec3(0,0,1));
+  glm::mat4 proj_mat = glm::infinitePerspective(
+    glm::radians(30.0f),mode->width/(float)mode->height, 1.f);
 
-  glBindProgramPipeline(program_pipeline);
+  glProgramUniform1f(program_interaction, 0, frame_time);
+  glProgramUniform1f(program_interaction, 1, G);
 
-  bool double_buffer = false;
+  glProgramUniform1f(program_integration, 0, frame_time);
 
-  glm::mat4 view_mat = glm::lookAt(glm::vec3(100,100,100),glm::vec3(0,0,0),glm::vec3(0,0,1));
-  glm::mat4 proj_mat = glm::perspective(40.0f,4.f/3.f, 1.f,200.f);
-  const float G = 0.001;
+  glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, vbo, 
+    0, sizeof(glm::vec4)*NUM_PARTICLES);
+  glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 1, velocities,
+    0, sizeof(glm::vec4)*NUM_PARTICLES);
 
   glBindVertexArray(vao);
+
+  int iterations_per_frame = MAX_ITERATIONS_PER_FRAME;
 
   // Main loop
   while (!glfwWindowShouldClose(window) && 
     glfwGetKey(window, GLFW_KEY_ESCAPE)==GLFW_RELEASE)
   {
-    /*
-    glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, vbo, 
-      double_buffer?sizeof(glm::vec4)*NUM_PARTICLES:0,
-      sizeof(glm::vec4)*NUM_PARTICLES);
-    glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 1, vbo, 
-      double_buffer?0:sizeof(glm::vec4)*NUM_PARTICLES,
-      sizeof(glm::vec4)*NUM_PARTICLES);
-    glProgramUniform1f(program_comp, 8, G);
-    glDispatchCompute(NUM_PARTICLES, 1, 1);
-    */
+    double frame_start = glfwGetTime();
+  
+    for (int i=0;i<iterations_per_frame;++i)
+    {
+      glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+      glUseProgram(program_interaction);
+      glDispatchCompute(NUM_PARTICLES/256, 1, 1);
 
+      glUseProgram(program_integration);
+      glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+      glDispatchCompute(NUM_PARTICLES/256, 1, 1);
+    }
+
+    glUseProgram(program_disp);
     glClear(GL_COLOR_BUFFER_BIT);
     glProgramUniformMatrix4fv(program_disp, 0, 1, GL_FALSE, glm::value_ptr(view_mat));
     glProgramUniformMatrix4fv(program_disp, 4, 1, GL_FALSE, glm::value_ptr(proj_mat));
+    glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
     glDrawArrays(GL_POINTS, 0, NUM_PARTICLES);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
+
+    double frame_end = glfwGetTime();
+    double elapsed = frame_end - frame_start;
+    if (elapsed < frame_time) 
+    {
+      std::this_thread::sleep_for(std::chrono::nanoseconds((long int)((frame_time-elapsed)*1000000000)));
+    }
   }
 
   glfwDestroyWindow(window);
