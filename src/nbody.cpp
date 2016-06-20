@@ -15,19 +15,23 @@
 #include <chrono>
 #include <thread>
 
-const float G = 10.0;
+const float G = 0.02;
 const float frame_time = 1.0/60.0;
-const size_t NUM_PARTICLES = 8*256;
-const int MAX_ITERATIONS_PER_FRAME = 16;
+const float dt = 0.005;
+const float DENSITY = 1000;
 
 glm::vec4 random_particle()
 {
+  glm::vec3 euler;
+  euler.x = 2*M_PI*std::rand()/(float)RAND_MAX;
+  euler.y = acos(2*std::rand()/(float)RAND_MAX - 1)-M_PI/2;
+  euler.z = exp(log(100)*std::rand()/(float)RAND_MAX);
+
   glm::vec4 particle;
-  for (int i=0;i<3;++i)
-  {
-    particle[i] = 200.0*std::rand()/(float)RAND_MAX - 100.0;
-  }
-  particle.w = 10.0*std::rand()/(float)RAND_MAX;
+  particle.x = cos(euler.x)*cos(euler.y)*euler.z;
+  particle.y = sin(euler.x)*cos(euler.y)*euler.z;
+  particle.z = sin(euler.y)*euler.z;
+  particle.w = 0.2*std::rand()/(float)RAND_MAX+0.1;
   return particle;
 }
 
@@ -83,8 +87,24 @@ void program_link(GLuint program)
   }
 }
 
-int main()
+int main(int argc, char **argv)
 {
+
+  size_t num_particles = 8*256;
+  int MAX_ITERATIONS_PER_FRAME = 1;
+
+  float view_theta = 5*M_PI/4;
+  float view_phi = -M_PI/4;
+
+  double sensibility = 0.002;
+  float move_speed = 0.5;
+
+  if (argc >= 2)
+    num_particles = 256*atoi(argv[1]);
+
+  if (argc >= 3)
+    MAX_ITERATIONS_PER_FRAME = atoi(argv[2]);
+
   // Window initialization
   GLFWwindow *window;
 
@@ -107,7 +127,7 @@ int main()
 
   glfwMakeContextCurrent(window);
 
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   // OpenGL initialization
 
@@ -124,18 +144,18 @@ int main()
   glVertexArrayVertexBuffer(vao, 0, vbo, 0, sizeof(glm::vec4));
 
   glEnableVertexArrayAttrib(vao, 0);
-  glVertexArrayAttribFormat(vao, 0, 3, GL_FLOAT, GL_FALSE, 0);
+  glVertexArrayAttribFormat(vao, 0, 4, GL_FLOAT, GL_FALSE, 0);
   glVertexArrayAttribBinding(vao, 0, 0);
 
   // SSBO init
   {
-    std::vector<glm::vec4> particles_init(NUM_PARTICLES);
-    for (size_t i=0;i<NUM_PARTICLES;++i)
+    std::vector<glm::vec4> particles_init(num_particles);
+    for (size_t i=0;i<num_particles;++i)
     {
       particles_init[i] = random_particle();
     }
-    glNamedBufferData(vbo, NUM_PARTICLES*sizeof(glm::vec4), NULL, GL_DYNAMIC_COPY);
-    glNamedBufferSubData(vbo, 0, NUM_PARTICLES*sizeof(glm::vec4), particles_init.data());
+    glNamedBufferData(vbo, num_particles*sizeof(glm::vec4), NULL, GL_DYNAMIC_COPY);
+    glNamedBufferSubData(vbo, 0, num_particles*sizeof(glm::vec4), particles_init.data());
   }
 
   // Velocity SSBO
@@ -143,13 +163,13 @@ int main()
   glCreateBuffers(1, &velocities);
 
   {
-    std::vector<glm::vec4> vel_init(NUM_PARTICLES);
-    for (size_t i=0;i<NUM_PARTICLES;++i)
+    std::vector<glm::vec4> vel_init(num_particles);
+    for (size_t i=0;i<num_particles;++i)
     {
       vel_init[i] = glm::vec4(0.0);
     }
-    glNamedBufferData(velocities, NUM_PARTICLES*sizeof(glm::vec4), NULL, GL_DYNAMIC_COPY);
-    glNamedBufferSubData(velocities, 0, NUM_PARTICLES*sizeof(glm::vec4), vel_init.data());
+    glNamedBufferData(velocities, num_particles*sizeof(glm::vec4), NULL, GL_DYNAMIC_COPY);
+    glNamedBufferSubData(velocities, 0, num_particles*sizeof(glm::vec4), vel_init.data());
   }
 
   // Shader program
@@ -168,31 +188,29 @@ int main()
   program_link(program_disp);
 
   // Uniforms
-  glProgramUniform1f(program_interaction, 0, frame_time);
+  glProgramUniform1f(program_interaction, 0, dt);
   glProgramUniform1f(program_interaction, 1, G);
+  glProgramUniform1f(program_interaction, 2, DENSITY);
 
-  glProgramUniform1f(program_integration, 0, frame_time);
+  glProgramUniform1f(program_integration, 0, dt);
 
   // SSBO binding
   glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, vbo, 
-    0, sizeof(glm::vec4)*NUM_PARTICLES);
+    0, sizeof(glm::vec4)*num_particles);
   glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 1, velocities,
-    0, sizeof(glm::vec4)*NUM_PARTICLES);
+    0, sizeof(glm::vec4)*num_particles);
 
   glBindVertexArray(vao);
 
   int iterations_per_frame = MAX_ITERATIONS_PER_FRAME;
-
-  float view_theta = 0.0;
-  float view_phi = 0.0;
 
   glm::vec3 view_pos = glm::vec3(100,100,100);
 
   double xmid = mode->width  / 2;
   double ymid = mode->height / 2;
 
-  double sensibility = 0.002;
-  float move_speed = 0.5;
+  double last_xpos, last_ypos;
+  glfwGetCursorPos(window, &last_xpos, &last_ypos);
 
   // Main loop
   while (!glfwWindowShouldClose(window) && 
@@ -203,14 +221,18 @@ int main()
     double xpos,ypos;
     double xdiff, ydiff;
     glfwGetCursorPos(window, &xpos, &ypos);
-    xdiff = xpos - xmid;
-    ydiff = ypos - ymid;
-    glfwSetCursorPos(window, xmid, ymid);
+    xdiff = xpos - last_xpos;
+    ydiff = ypos - last_ypos;
+
+    last_xpos = xpos;
+    last_ypos = ypos;
 
     view_theta -= xdiff*sensibility;
     view_phi -= ydiff*sensibility;
 
-    view_phi = std::max(-(float)M_PI/2+0.0001f, std::min(view_phi, (float)M_PI/2-0.0001f));
+    if (view_theta < 0) view_theta += 2*M_PI;
+    if (view_theta >= 2*M_PI) view_theta -= 2*M_PI;
+    view_phi = std::max(-(float)M_PI/2+0.001f, std::min(view_phi, (float)M_PI/2-0.001f));
 
     glm::vec3 dir = glm::vec3(cos(view_theta)*cos(view_phi), sin(view_theta)*cos(view_phi), sin(view_phi));
     glm::vec3 right = glm::normalize(glm::cross(dir,glm::vec3(0,0,1)));
@@ -236,11 +258,11 @@ int main()
     {
       glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
       glUseProgram(program_interaction);
-      glDispatchCompute(NUM_PARTICLES/256, 1, 1);
+      glDispatchCompute(num_particles/256, 1, 1);
 
       glUseProgram(program_integration);
       glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-      glDispatchCompute(NUM_PARTICLES/256, 1, 1);
+      glDispatchCompute(num_particles/256, 1, 1);
     }
 
     glUseProgram(program_disp);
@@ -248,7 +270,7 @@ int main()
     glProgramUniformMatrix4fv(program_disp, 0, 1, GL_FALSE, glm::value_ptr(view_mat));
     glProgramUniformMatrix4fv(program_disp, 4, 1, GL_FALSE, glm::value_ptr(proj_mat));
     glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
-    glDrawArrays(GL_POINTS, 0, NUM_PARTICLES);
+    glDrawArrays(GL_POINTS, 0, num_particles);
 
     glfwSwapBuffers(window);
     glfwPollEvents();

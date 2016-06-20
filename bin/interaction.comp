@@ -3,7 +3,8 @@
 #define EPS2 0.000001
 
 layout (location = 0) uniform float dt;
-layout (location = 1) uniform float G; 
+layout (location = 1) uniform float G;
+layout (location = 2) uniform float density;
 
 layout (local_size_x = 256) in;
 
@@ -16,6 +17,8 @@ layout (binding = 1, std430) buffer particles_vel
 {
   vec4 part_vel[];
 };
+
+#define M_PI 3.1415926535897932384626433832795
 
 shared vec4 cache[gl_WorkGroupSize.x];
 
@@ -36,7 +39,8 @@ void main()
   vec3 vel = vec3(0.0);
   for (uint i=0;i<gl_NumWorkGroups.x*gl_WorkGroupSize.x;i+=gl_WorkGroupSize.x)
   {
-    cache[gl_LocalInvocationIndex] = part_in[i+gl_LocalInvocationIndex];
+    vec4 p = part_in[i+gl_LocalInvocationIndex];
+    cache[gl_LocalInvocationIndex] = vec4(p.xyz,4*M_PI*p.w*p.w*p.w*density/3);
     groupMemoryBarrier();
     barrier();
     for (int j=0;j<gl_WorkGroupSize.x;++j)
