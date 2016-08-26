@@ -15,44 +15,85 @@
 #include <chrono>
 #include <thread>
 
-const float G = 0.02;
+const float G = 2.0;
 const float frame_time = 1.0/60.0;
 const float dt = 0.005;
-const float DENSITY = 1000;
+
+using namespace std;
 
 glm::vec4 random_particle()
 {
   glm::vec3 euler;
-  euler.x = 2*M_PI*std::rand()/(float)RAND_MAX;
-  euler.y = acos(2*std::rand()/(float)RAND_MAX - 1)-M_PI/2;
-  euler.z = exp(log(100)*std::rand()/(float)RAND_MAX);
+  euler.x = 2*M_PI*rand()/(float)RAND_MAX;
+  euler.y = acos(2*rand()/(float)RAND_MAX - 1)-M_PI/2;
+  euler.z = exp(log(100)*rand()/(float)RAND_MAX);
 
   glm::vec4 particle;
   particle.x = cos(euler.x)*cos(euler.y)*euler.z;
   particle.y = sin(euler.x)*cos(euler.y)*euler.z;
   particle.z = sin(euler.y)*euler.z;
-  particle.w = 0.2*std::rand()/(float)RAND_MAX+0.1;
+  particle.w = 1.f;
   return particle;
 }
 
-void program_source(GLuint program, GLenum shader_type, const std::string &filename)
+glm::vec3 temp_to_color(float temp)
 {
-  std::string code;
+  glm::vec3 color;
+  temp /= 100.0;
+
+  if (temp <= 66)
+  {
+    color.r = 1.0;
+    float g = 99.4708025861 * log(temp) - 161.1195681661;
+    color.g = max(0.f, min(1.f, g/255.f));
+  }
+  else
+  {
+    float r = 329.698727446 * pow(temp-60, -0.1332047592);
+    color.r = max(0.f, min(1.f, r/255.f));
+    float g  = 288.1221695283*pow(temp,-0.0755148492);
+    color.g = max(0.f, min(1.f, g/255.f));
+  }
+
+  if (temp >= 66)      color.b = 1.0;
+  else if (temp <= 19) color.b = 0.0;
+  else
+  {
+    float b = 138.5177312231*log(temp-10) - 305.0447927307;
+    color.b = max(0.f, min(1.f, b/255.f));
+  }
+  return color;
+}
+
+float temp_to_luminosity(float temp)
+{
+  return 1.807897117E-11*pow(temp/100.0,6.122745955);
+}
+
+glm::vec4 random_color()
+{
+  float temp = pow(100.0*rand()/(float)RAND_MAX, -0.162349328)*6273.584809;
+  return glm::vec4(temp_to_color(temp)*temp_to_luminosity(temp),1.0);
+}
+
+void program_source(GLuint program, GLenum shader_type, const string &filename)
+{
+  string code;
 
   try
   {
-    std::stringstream sstream;
+    stringstream sstream;
     {
-      std::ifstream stream;
-      stream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+      ifstream stream;
+      stream.exceptions(ifstream::failbit | ifstream::badbit);
       stream.open(filename);
       sstream << stream.rdbuf();
     }
     code = sstream.str();
   }
-  catch (std::ifstream::failure e)
+  catch (ifstream::failure e)
   {
-    std::cerr << "Can't open " << filename << " : " << e.what() << std::endl;
+    cerr << "Can't open " << filename << " : " << e.what() << endl;
   }
 
   GLint success;
@@ -67,7 +108,7 @@ void program_source(GLuint program, GLenum shader_type, const std::string &filen
   if (!success)
   {
     glGetShaderInfoLog(shad_id, sizeof(info_log), NULL, info_log);
-    std::cerr << "Can't compile " <<  filename << " " << info_log << std::endl;
+    cerr << "Can't compile " <<  filename << " " << info_log << endl;
     exit(-1);
   }
   glAttachShader(program, shad_id);
@@ -83,7 +124,7 @@ void program_link(GLuint program)
   if (!success)
   {
     glGetProgramInfoLog(program, sizeof(info_log), NULL, info_log);
-    std::cerr << "Can't link :" << info_log << std::endl;
+    cerr << "Can't link :" << info_log << endl;
   }
 }
 
@@ -133,29 +174,67 @@ int main(int argc, char **argv)
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
   {
-    std::cerr << "Can't load GL" << std::endl;
+    cerr << "Can't load GL" << endl;
     return -1;
   }
 
-  // VAO init
-  GLuint vao, vbo;
-  glCreateVertexArrays(1, &vao);
-  glCreateBuffers(1, &vbo);
-  glVertexArrayVertexBuffer(vao, 0, vbo, 0, sizeof(glm::vec4));
+  GLuint flare_tex;
+  const int tex_size = 32;
+  glCreateTextures(GL_TEXTURE_2D, 1, &flare_tex);
+  glTextureStorage2D(flare_tex, (int)(floor(log(tex_size)/log(2))), GL_R32F, tex_size, tex_size);
+  {
+    std::array<float, tex_size*tex_size> pixels;
+    float sigma2 = 2;
+    float A = 1.0;
+    for (int i=0;i<tex_size;++i)
+    {
+      float i1 = i-tex_size/2;
+      for (int j=0;j<tex_size;++j)
+      {
+        float j1 = j-tex_size/2;
+        pixels[i*tex_size+j] = A*exp(-((i1*i1)/(2*sigma2) + (j1*j1)/(2*sigma2)));
+      }
+    }
+    glTextureSubImage2D(flare_tex, 0, 0, 0, tex_size, tex_size, GL_RED, GL_FLOAT, &pixels);
+  }
+  glGenerateTextureMipmap(flare_tex);
 
-  glEnableVertexArrayAttrib(vao, 0);
-  glVertexArrayAttribFormat(vao, 0, 4, GL_FLOAT, GL_FALSE, 0);
+  // VAO init
+  GLuint vao, vbo_pos, vbo_col;
+  glCreateVertexArrays(1, &vao);
+  glCreateBuffers(1, &vbo_pos);
+  glCreateBuffers(1, &vbo_col);
+  glVertexArrayVertexBuffer(vao, 0, vbo_pos, 0, sizeof(glm::vec4));
+  glVertexArrayVertexBuffer(vao, 1, vbo_col, 0, sizeof(glm::vec4));
+
+  glEnableVertexArrayAttrib( vao, 0);
+  glVertexArrayAttribFormat( vao, 0, 4, GL_FLOAT, GL_FALSE, 0);
   glVertexArrayAttribBinding(vao, 0, 0);
 
-  // SSBO init
+  glEnableVertexArrayAttrib( vao, 1);
+  glVertexArrayAttribFormat( vao, 1, 4, GL_FLOAT, GL_FALSE, 0);
+  glVertexArrayAttribBinding(vao, 1, 1);
+
+  // Pos SSBO init
   {
-    std::vector<glm::vec4> particles_init(num_particles);
+    vector<glm::vec4> particles_pos(num_particles);
     for (size_t i=0;i<num_particles;++i)
     {
-      particles_init[i] = random_particle();
+      particles_pos[i] = random_particle();
     }
-    glNamedBufferData(vbo, num_particles*sizeof(glm::vec4), NULL, GL_DYNAMIC_COPY);
-    glNamedBufferSubData(vbo, 0, num_particles*sizeof(glm::vec4), particles_init.data());
+    glNamedBufferData(vbo_pos, num_particles*sizeof(glm::vec4), NULL, GL_DYNAMIC_COPY);
+    glNamedBufferSubData(vbo_pos, 0, num_particles*sizeof(glm::vec4), particles_pos.data());
+  }
+
+  // Color buffer init
+  {
+    vector<glm::vec4> particles_col(num_particles);
+    for (size_t i=0;i<num_particles;++i)
+    {
+      particles_col[i] = random_color();
+    }
+    glNamedBufferData(vbo_col, num_particles*sizeof(glm::vec4), NULL, GL_DYNAMIC_COPY);
+    glNamedBufferSubData(vbo_col, 0, num_particles*sizeof(glm::vec4), particles_col.data());
   }
 
   // Velocity SSBO
@@ -163,7 +242,7 @@ int main(int argc, char **argv)
   glCreateBuffers(1, &velocities);
 
   {
-    std::vector<glm::vec4> vel_init(num_particles);
+    vector<glm::vec4> vel_init(num_particles);
     for (size_t i=0;i<num_particles;++i)
     {
       vel_init[i] = glm::vec4(0.0);
@@ -190,12 +269,11 @@ int main(int argc, char **argv)
   // Uniforms
   glProgramUniform1f(program_interaction, 0, dt);
   glProgramUniform1f(program_interaction, 1, G);
-  glProgramUniform1f(program_interaction, 2, DENSITY);
 
   glProgramUniform1f(program_integration, 0, dt);
 
   // SSBO binding
-  glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, vbo, 
+  glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, vbo_pos, 
     0, sizeof(glm::vec4)*num_particles);
   glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 1, velocities,
     0, sizeof(glm::vec4)*num_particles);
@@ -232,7 +310,7 @@ int main(int argc, char **argv)
 
     if (view_theta < 0) view_theta += 2*M_PI;
     if (view_theta >= 2*M_PI) view_theta -= 2*M_PI;
-    view_phi = std::max(-(float)M_PI/2+0.001f, std::min(view_phi, (float)M_PI/2-0.001f));
+    view_phi = max(-(float)M_PI/2+0.001f, min(view_phi, (float)M_PI/2-0.001f));
 
     glm::vec3 dir = glm::vec3(cos(view_theta)*cos(view_phi), sin(view_theta)*cos(view_phi), sin(view_phi));
     glm::vec3 right = glm::normalize(glm::cross(dir,glm::vec3(0,0,1)));
@@ -269,6 +347,7 @@ int main(int argc, char **argv)
     glClear(GL_COLOR_BUFFER_BIT);
     glProgramUniformMatrix4fv(program_disp, 0, 1, GL_FALSE, glm::value_ptr(view_mat));
     glProgramUniformMatrix4fv(program_disp, 4, 1, GL_FALSE, glm::value_ptr(proj_mat));
+    glBindTextureUnit(0, flare_tex);
     glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
     glDrawArrays(GL_POINTS, 0, num_particles);
 
@@ -279,7 +358,7 @@ int main(int argc, char **argv)
     double elapsed = frame_end - frame_start;
     if (elapsed < frame_time) 
     {
-      std::this_thread::sleep_for(std::chrono::nanoseconds((long int)((frame_time-elapsed)*1000000000)));
+      this_thread::sleep_for(chrono::nanoseconds((long int)((frame_time-elapsed)*1000000000)));
     }
   }
 

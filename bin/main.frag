@@ -1,12 +1,13 @@
 #version 450 core
 
 in vec2 bary;
+in vec4 color;
 
-out vec4 color;
+layout (binding = 0) uniform sampler2D tex;
+
+out vec4 out_color;
 
 void main()
 {
-  if (dot(bary,bary)>1)
-    discard;
-  color = vec4(1.0);
+  out_color = vec4(color.rgb, texture(tex, bary));
 }
