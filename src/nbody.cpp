@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <thread>
+#include <random>
 
 const float G = 2.0;
 const float frame_time = 1.0/60.0;
@@ -21,12 +22,15 @@ const float dt = 0.005;
 
 using namespace std;
 
+mt19937 rng;
+uniform_real_distribution<> dis(0, 1);
+
 glm::vec4 random_particle()
 {
-  glm::vec3 euler;
-  euler.x = 2*M_PI*rand()/(float)RAND_MAX;
-  euler.y = acos(2*rand()/(float)RAND_MAX - 1)-M_PI/2;
-  euler.z = exp(log(100)*rand()/(float)RAND_MAX);
+  glm::vec3 euler; 
+  euler.x = dis(rng)*2*M_PI;
+  euler.y = acos(2*dis(rng)-1)-M_PI/2;
+  euler.z = exp(log(100)*dis(rng));
 
   glm::vec4 particle;
   particle.x = cos(euler.x)*cos(euler.y)*euler.z;
@@ -72,8 +76,8 @@ float temp_to_luminosity(float temp)
 
 glm::vec4 random_color()
 {
-  float temp = pow(100.0*rand()/(float)RAND_MAX, -0.162349328)*6273.584809;
-  return glm::vec4(temp_to_color(temp)*temp_to_luminosity(temp),1.0);
+  float temp = pow(100.0*dis(rng), -0.162349328)*6273.584809;
+  return glm::vec4(temp_to_color(temp)*temp_to_luminosity(temp)*10.f, 1.0);
 }
 
 void program_source(GLuint program, GLenum shader_type, const string &filename)
@@ -178,13 +182,14 @@ int main(int argc, char **argv)
     return -1;
   }
 
+  // Flare texture init
   GLuint flare_tex;
-  const int tex_size = 32;
+  const int tex_size = 16;
   glCreateTextures(GL_TEXTURE_2D, 1, &flare_tex);
-  glTextureStorage2D(flare_tex, (int)(floor(log(tex_size)/log(2))), GL_R32F, tex_size, tex_size);
+  glTextureStorage2D(flare_tex, (int)(ceil(log(tex_size)/log(2))), GL_R32F, tex_size, tex_size);
   {
     std::array<float, tex_size*tex_size> pixels;
-    float sigma2 = 2;
+    float sigma2 = tex_size/2;
     float A = 1.0;
     for (int i=0;i<tex_size;++i)
     {
@@ -198,6 +203,10 @@ int main(int argc, char **argv)
     glTextureSubImage2D(flare_tex, 0, 0, 0, tex_size, tex_size, GL_RED, GL_FLOAT, &pixels);
   }
   glGenerateTextureMipmap(flare_tex);
+
+  // Enables
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   // VAO init
   GLuint vao, vbo_pos, vbo_col;
@@ -271,6 +280,8 @@ int main(int argc, char **argv)
   glProgramUniform1f(program_interaction, 1, G);
 
   glProgramUniform1f(program_integration, 0, dt);
+
+  glProgramUniform2f(program_disp, 8, tex_size/float(2*mode->width), tex_size/float(2*mode->height));
 
   // SSBO binding
   glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, vbo_pos, 

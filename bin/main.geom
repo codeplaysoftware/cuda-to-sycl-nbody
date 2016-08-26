@@ -3,7 +3,7 @@
 layout(points) in;
 layout(triangle_strip, max_vertices = 4) out;
 
-layout (location = 4) uniform mat4 p;
+layout (location = 8) uniform vec2 flare_size;
 
 in vec4 pass_pos[];
 in vec4 pass_col[];
@@ -13,24 +13,24 @@ out vec2 bary;
 
 void main()
 {
-  vec4 pos = vec4(pass_pos[0].xyz, 1.0);
-  float r = 0.2;
-
+  vec4 pos = pass_pos[0];
   color = pass_col[0];
 
-  gl_Position = p*(pos+vec4(-r,-r,0,0));
+  vec2 f = flare_size*pass_pos[0].w;
+
+  gl_Position = pos+vec4(-f.x,-f.y,0,0);
   bary = vec2(0,0);
   EmitVertex();
 
-  gl_Position = p*(pos+vec4(+r,-r,0,0));
+  gl_Position = pos+vec4(+f.x,-f.y,0,0);
   bary = vec2(+1,0);
   EmitVertex();
 
-  gl_Position = p*(pos+vec4(-r,+r,0,0));
+  gl_Position = pos+vec4(-f.x,+f.y,0,0);
   bary = vec2(0,+1);
   EmitVertex();
 
-  gl_Position = p*(pos+vec4(+r,+r,0,0));
+  gl_Position = pos+vec4(+f.x,+f.y,0,0);
   bary = vec2(+1,+1);
   EmitVertex();
 
