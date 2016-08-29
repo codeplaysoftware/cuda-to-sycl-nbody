@@ -30,7 +30,7 @@ glm::vec4 random_particle()
   glm::vec3 euler; 
   euler.x = dis(rng)*2*M_PI;
   euler.y = acos(2*dis(rng)-1)-M_PI/2;
-  euler.z = exp(log(100)*dis(rng));
+  euler.z = 40.0;
 
   glm::vec4 particle;
   particle.x = cos(euler.x)*cos(euler.y)*euler.z;
@@ -76,8 +76,11 @@ float temp_to_luminosity(float temp)
 
 glm::vec4 random_color()
 {
-  float temp = pow(100.0*dis(rng), -0.162349328)*6273.584809;
-  return glm::vec4(temp_to_color(temp)*temp_to_luminosity(temp)*10.f, 1.0);
+  //float temp = dis(rng)*8000+14000;
+  //return glm::vec4(temp_to_color(temp)*(temp_to_luminosity(temp)*0.01f), 1.0);
+  float t = dis(rng);
+  glm::vec3 c = glm::vec3(0.6*t,0.4,1.0);
+  return glm::vec4(c*10.f,1.f);
 }
 
 void program_source(GLuint program, GLenum shader_type, const string &filename)
@@ -168,7 +171,9 @@ int main(int argc, char **argv)
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  window = glfwCreateWindow(mode->width, mode->height, "N Body simulation", monitor, NULL);
+  int width = 1280;
+  int height = 720;
+  window = glfwCreateWindow(width, height, "N Body simulation", NULL, NULL);
 
   glfwMakeContextCurrent(window);
 
@@ -186,10 +191,11 @@ int main(int argc, char **argv)
   GLuint flare_tex;
   const int tex_size = 16;
   glCreateTextures(GL_TEXTURE_2D, 1, &flare_tex);
-  glTextureStorage2D(flare_tex, (int)(ceil(log(tex_size)/log(2))), GL_R32F, tex_size, tex_size);
+  glTextureStorage2D(flare_tex, 1, GL_R32F, tex_size, tex_size);
+  glTextureParameteri(flare_tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   {
     std::array<float, tex_size*tex_size> pixels;
-    float sigma2 = tex_size/2;
+    float sigma2 = tex_size/2.0;
     float A = 1.0;
     for (int i=0;i<tex_size;++i)
     {
@@ -197,32 +203,49 @@ int main(int argc, char **argv)
       for (int j=0;j<tex_size;++j)
       {
         float j1 = j-tex_size/2;
-        pixels[i*tex_size+j] = A*exp(-((i1*i1)/(2*sigma2) + (j1*j1)/(2*sigma2)));
+        pixels[i*tex_size+j] = pow(A*exp(-((i1*i1)/(2*sigma2) + (j1*j1)/(2*sigma2))),2.2);
       }
     }
     glTextureSubImage2D(flare_tex, 0, 0, 0, tex_size, tex_size, GL_RED, GL_FLOAT, &pixels);
   }
-  glGenerateTextureMipmap(flare_tex);
 
   // Enables
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
   // VAO init
-  GLuint vao, vbo_pos, vbo_col;
-  glCreateVertexArrays(1, &vao);
+  // Particle VAO
+  GLuint vao_particles, vbo_pos, vbo_col;
+  glCreateVertexArrays(1, &vao_particles);
   glCreateBuffers(1, &vbo_pos);
   glCreateBuffers(1, &vbo_col);
-  glVertexArrayVertexBuffer(vao, 0, vbo_pos, 0, sizeof(glm::vec4));
-  glVertexArrayVertexBuffer(vao, 1, vbo_col, 0, sizeof(glm::vec4));
+  glVertexArrayVertexBuffer(vao_particles, 0, vbo_pos, 0, sizeof(glm::vec4));
+  glVertexArrayVertexBuffer(vao_particles, 1, vbo_col, 0, sizeof(glm::vec4));
 
-  glEnableVertexArrayAttrib( vao, 0);
-  glVertexArrayAttribFormat( vao, 0, 4, GL_FLOAT, GL_FALSE, 0);
-  glVertexArrayAttribBinding(vao, 0, 0);
+  glEnableVertexArrayAttrib( vao_particles, 0);
+  glVertexArrayAttribFormat( vao_particles, 0, 4, GL_FLOAT, GL_FALSE, 0);
+  glVertexArrayAttribBinding(vao_particles, 0, 0);
 
-  glEnableVertexArrayAttrib( vao, 1);
-  glVertexArrayAttribFormat( vao, 1, 4, GL_FLOAT, GL_FALSE, 0);
-  glVertexArrayAttribBinding(vao, 1, 1);
+  glEnableVertexArrayAttrib( vao_particles, 1);
+  glVertexArrayAttribFormat( vao_particles, 1, 4, GL_FLOAT, GL_FALSE, 0);
+  glVertexArrayAttribBinding(vao_particles, 1, 1);
+
+  // Deferred VAO
+  GLuint vao_deferred, vbo_deferred;
+  glCreateVertexArrays(1, &vao_deferred);
+  glCreateBuffers(1, &vbo_deferred);
+  glVertexArrayVertexBuffer(vao_deferred, 0, vbo_deferred, 0, sizeof(glm::vec2));
+  glEnableVertexArrayAttrib( vao_deferred, 0);
+  glVertexArrayAttribFormat( vao_deferred, 0, 2, GL_FLOAT, GL_FALSE, 0);
+  glVertexArrayAttribBinding(vao_deferred, 0, 0);
+
+  // Deferred tri
+  {
+    glm::vec2 tri[3] = {
+      glm::vec2(-2,-1), 
+      glm::vec2(+2,-1),
+      glm::vec2( 0, 4)};
+    glNamedBufferStorage(vbo_deferred, 3*sizeof(glm::vec2), tri, 0);
+  }
 
   // Pos SSBO init
   {
@@ -231,8 +254,7 @@ int main(int argc, char **argv)
     {
       particles_pos[i] = random_particle();
     }
-    glNamedBufferData(vbo_pos, num_particles*sizeof(glm::vec4), NULL, GL_DYNAMIC_COPY);
-    glNamedBufferSubData(vbo_pos, 0, num_particles*sizeof(glm::vec4), particles_pos.data());
+    glNamedBufferStorage(vbo_pos, num_particles*sizeof(glm::vec4), particles_pos.data(), 0);
   }
 
   // Color buffer init
@@ -242,8 +264,7 @@ int main(int argc, char **argv)
     {
       particles_col[i] = random_color();
     }
-    glNamedBufferData(vbo_col, num_particles*sizeof(glm::vec4), NULL, GL_DYNAMIC_COPY);
-    glNamedBufferSubData(vbo_col, 0, num_particles*sizeof(glm::vec4), particles_col.data());
+    glNamedBufferStorage(vbo_col, num_particles*sizeof(glm::vec4), particles_col.data(), 0);
   }
 
   // Velocity SSBO
@@ -256,8 +277,7 @@ int main(int argc, char **argv)
     {
       vel_init[i] = glm::vec4(0.0);
     }
-    glNamedBufferData(velocities, num_particles*sizeof(glm::vec4), NULL, GL_DYNAMIC_COPY);
-    glNamedBufferSubData(velocities, 0, num_particles*sizeof(glm::vec4), vel_init.data());
+    glNamedBufferStorage(velocities, num_particles*sizeof(glm::vec4), vel_init.data(), 0);
   }
 
   // Shader program
@@ -269,27 +289,60 @@ int main(int argc, char **argv)
   program_source(program_integration, GL_COMPUTE_SHADER, "integration.comp");
   program_link(program_integration);
 
-  GLuint program_disp = glCreateProgram();
-  program_source(program_disp, GL_VERTEX_SHADER  , "main.vert");
-  program_source(program_disp, GL_FRAGMENT_SHADER, "main.frag");
-  program_source(program_disp, GL_GEOMETRY_SHADER, "main.geom");
-  program_link(program_disp);
+  GLuint program_hdr = glCreateProgram();
+  program_source(program_hdr, GL_VERTEX_SHADER  , "main.vert");
+  program_source(program_hdr, GL_FRAGMENT_SHADER, "main.frag");
+  program_source(program_hdr, GL_GEOMETRY_SHADER, "main.geom");
+  program_link(program_hdr);
 
-  // Uniforms
+  GLuint program_tonemap = glCreateProgram();
+  program_source(program_tonemap, GL_VERTEX_SHADER,  "deferred.vert");
+  program_source(program_tonemap, GL_FRAGMENT_SHADER,"tonemap.frag" );
+  program_link(program_tonemap);
+
+  GLuint program_highpass = glCreateProgram();
+  program_source(program_highpass, GL_VERTEX_SHADER,  "deferred.vert");
+  program_source(program_highpass, GL_FRAGMENT_SHADER,"highpass.frag");
+  program_link(program_highpass);
+
+  GLuint program_blur = glCreateProgram();
+  program_source(program_blur, GL_VERTEX_SHADER,  "deferred.vert");
+  program_source(program_blur, GL_FRAGMENT_SHADER,"blur.frag"    );
+  program_link(program_blur);
+
+  // FBOs
+  int blur_downscale = 2;
+  GLuint fbos[4];
+  GLuint attachs[4];
+  glCreateFramebuffers(4, fbos);
+  glCreateTextures(GL_TEXTURE_2D, 4, attachs);
+
+  for (int i=0;i<4;++i)
+  {
+    glTextureStorage2D(attachs[i], 1, GL_RGBA16F, 
+      (i>1)?width/blur_downscale:width, 
+      (i>1)?height/blur_downscale:height);
+    glTextureParameteri(attachs[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTextureParameteri(attachs[i], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(attachs[i], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glNamedFramebufferTexture(fbos[i], GL_COLOR_ATTACHMENT0, attachs[i], 0);
+  }
+
+  // const Uniforms
   glProgramUniform1f(program_interaction, 0, dt);
   glProgramUniform1f(program_interaction, 1, G);
-
   glProgramUniform1f(program_integration, 0, dt);
-
-  glProgramUniform2f(program_disp, 8, tex_size/float(2*mode->width), tex_size/float(2*mode->height));
+  glProgramUniform2f(program_hdr, 8, tex_size/float(2*width), tex_size/float(2*height));
+  glProgramUniform3f(program_highpass, 0, 1.0,1.0,1.0);
+  glProgramUniform2f(program_blur, 0, 
+    (float)blur_downscale/width, 
+    (float)blur_downscale/height);
 
   // SSBO binding
   glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, vbo_pos, 
     0, sizeof(glm::vec4)*num_particles);
   glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 1, velocities,
     0, sizeof(glm::vec4)*num_particles);
-
-  glBindVertexArray(vao);
 
   int iterations_per_frame = MAX_ITERATIONS_PER_FRAME;
 
@@ -354,13 +407,54 @@ int main(int argc, char **argv)
       glDispatchCompute(num_particles/256, 1, 1);
     }
 
-    glUseProgram(program_disp);
+    glBindVertexArray(vao_particles);
+
+    glEnable(GL_BLEND);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbos[0]);
+    glUseProgram(program_hdr);
     glClear(GL_COLOR_BUFFER_BIT);
-    glProgramUniformMatrix4fv(program_disp, 0, 1, GL_FALSE, glm::value_ptr(view_mat));
-    glProgramUniformMatrix4fv(program_disp, 4, 1, GL_FALSE, glm::value_ptr(proj_mat));
+    glProgramUniformMatrix4fv(program_hdr, 0, 1, GL_FALSE, glm::value_ptr(view_mat));
+    glProgramUniformMatrix4fv(program_hdr, 4, 1, GL_FALSE, glm::value_ptr(proj_mat));
     glBindTextureUnit(0, flare_tex);
     glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
     glDrawArrays(GL_POINTS, 0, num_particles);
+
+    glBindVertexArray(vao_deferred);
+    glDisable(GL_BLEND);
+
+    // Highpass
+    glBindFramebuffer(GL_FRAMEBUFFER, fbos[1]);
+    glUseProgram(program_highpass);
+    
+    glBindTextureUnit(0, attachs[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    glViewport(0,0,width/blur_downscale, height/blur_downscale);
+    glUseProgram(program_blur);
+
+    // Blur pingpong
+    int loop = 0;
+    for (int i=0;i<2;++i)
+    {
+      if (i==0) glProgramUniform2f(program_blur, 1, 1, 0);
+      else      glProgramUniform2f(program_blur, 1, 0, 1);
+      for (int j=0;j<100;++j)
+      {
+        GLuint fbo = fbos[(loop%2)+2];
+        GLuint attach = attachs[loop?((loop+1)%2+2):1];
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glBindTextureUnit(0, attach);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        loop++;
+      }
+    }
+
+    glViewport(0,0,width,height);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glUseProgram(program_tonemap);
+    glBindTextureUnit(0, attachs[0]);
+    glBindTextureUnit(1, attachs[3]);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -374,5 +468,6 @@ int main(int argc, char **argv)
   }
 
   glfwDestroyWindow(window);
+  glfwTerminate();
   return 0;
 }
