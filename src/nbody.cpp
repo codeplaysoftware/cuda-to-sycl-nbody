@@ -20,6 +20,13 @@ const float G = 2.0;
 const float frame_time = 1.0/60.0;
 const float dt = 0.005;
 
+double scroll = 0;
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+  scroll += yoffset;
+}
+
 using namespace std;
 
 mt19937 rng;
@@ -160,10 +167,7 @@ int main(int argc, char **argv)
 
   size_t num_particles = 50*256;
   int MAX_ITERATIONS_PER_FRAME = 4;
-  float damping = 0.9998;
-
-  float view_theta = 5*M_PI/4;
-  float view_phi = -M_PI/4;
+  float damping = 0.999998;
 
   double sensibility = 0.002;
   float move_speed = 0.5;
@@ -194,14 +198,14 @@ int main(int argc, char **argv)
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-  int width = 1280;
-  int height = 720;
+  int width = mode->width;
+  int height = mode->height-30;
   window = glfwCreateWindow(width, height, "N Body simulation", NULL, NULL);
 
   glfwMakeContextCurrent(window);
-
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  glfwSetScrollCallback(window, scroll_callback);
 
   // OpenGL initialization
 
@@ -358,12 +362,11 @@ int main(int argc, char **argv)
 
   int iterations_per_frame = MAX_ITERATIONS_PER_FRAME;
 
-  glm::vec3 view_pos = glm::vec3(100,100,100);
-
-  double xmid = mode->width  / 2;
-  double ymid = mode->height / 2;
+  float phi = M_PI/4, theta = 0, dist = 50.0;
+  float phi_vel = 0, theta_vel = 0, dist_vel = 0;
 
   double last_xpos, last_ypos;
+  bool drag = false;
   glfwGetCursorPos(window, &last_xpos, &last_ypos);
 
   // Main loop
@@ -372,38 +375,47 @@ int main(int argc, char **argv)
   {
     double frame_start = glfwGetTime();
 
-    double xpos,ypos;
-    double xdiff, ydiff;
-    glfwGetCursorPos(window, &xpos, &ypos);
-    xdiff = xpos - last_xpos;
-    ydiff = ypos - last_ypos;
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT))
+    {
+      if (!drag)
+      {
+        glfwGetCursorPos(window, &last_xpos, &last_ypos);
+        drag = true;
+      }
+      double xpos,ypos;
+      double xdiff, ydiff;
+      glfwGetCursorPos(window, &xpos, &ypos);
+      xdiff = xpos - last_xpos;
+      ydiff = ypos - last_ypos;
 
-    last_xpos = xpos;
-    last_ypos = ypos;
+      last_xpos = xpos;
+      last_ypos = ypos;
 
-    view_theta -= xdiff*sensibility;
-    view_phi -= ydiff*sensibility;
+      theta_vel += xdiff*sensibility;
+      phi_vel   += ydiff*sensibility;
+    }
+    else drag = false;
 
-    if (view_theta < 0) view_theta += 2*M_PI;
-    if (view_theta >= 2*M_PI) view_theta -= 2*M_PI;
-    view_phi = max(-(float)M_PI/2+0.001f, min(view_phi, (float)M_PI/2-0.001f));
+    theta -= theta_vel;
+    phi += phi_vel;
 
-    glm::vec3 dir = glm::vec3(cos(view_theta)*cos(view_phi), sin(view_theta)*cos(view_phi), sin(view_phi));
-    glm::vec3 right = glm::normalize(glm::cross(dir,glm::vec3(0,0,1)));
-    glm::vec3 up = glm::normalize(glm::cross(right, dir));
+    theta_vel *= 0.72;
+    phi_vel *= 0.72;
 
-    if (glfwGetKey(window, GLFW_KEY_W))
-      view_pos += move_speed*dir;
-    else if (glfwGetKey(window, GLFW_KEY_S))
-      view_pos -= move_speed*dir;
-    if (glfwGetKey(window, GLFW_KEY_D))
-      view_pos += move_speed*right;
-    else if (glfwGetKey(window, GLFW_KEY_A))
-      view_pos -= move_speed*right;
+    dist_vel += scroll*0.02;
+    scroll = 0;
+    dist *= (1.0-dist_vel);
+    dist_vel *= 0.8;
+
+    if (theta < 0) theta += 2*M_PI;
+    if (theta >= 2*M_PI) theta -= 2*M_PI;
+    phi = max(-(float)M_PI/2+0.001f, min(phi, (float)M_PI/2-0.001f));
+
+    glm::vec3 view_pos = glm::vec3(cos(theta)*cos(phi), sin(theta)*cos(phi), sin(phi))*dist;
 
      glm::mat4 view_mat = glm::lookAt(
       view_pos,
-      view_pos+dir,
+      glm::vec3(0,0,0),
       glm::vec3(0,0,1));
     glm::mat4 proj_mat = glm::infinitePerspective(
     glm::radians(30.0f),mode->width/(float)mode->height, 1.f);

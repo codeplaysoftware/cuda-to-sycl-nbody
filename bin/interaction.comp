@@ -1,6 +1,6 @@
 #version 450 core
 
-#define EPS2 0.6
+#define EPS2 0.2
 
 layout (location = 0) uniform float dt;
 layout (location = 1) uniform float G;

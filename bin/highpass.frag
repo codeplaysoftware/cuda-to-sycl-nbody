@@ -8,8 +8,9 @@ out vec4 out_color;
 
 void main()
 {
+  const vec4 MAX = vec4(100,100,100,1.0);
   vec4 col = texelFetch(tex, ivec2(gl_FragCoord.xy), 0);
   if (any(greaterThan(col.rgb, threshold)))
-    out_color = col;
+    out_color = min(col, MAX);
   else out_color = vec4(0.0);
 }
