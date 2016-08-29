@@ -1,9 +1,10 @@
 #version 450 core
 
-#define EPS2 0.000001
+#define EPS2 0.6
 
 layout (location = 0) uniform float dt;
 layout (location = 1) uniform float G;
+layout (location = 2) uniform float damping;
 
 layout (local_size_x = 256) in;
 
@@ -45,6 +46,6 @@ void main()
       vel += interaction(p1, cache[j]);
     }
   }
-  vec3 final_vel = dt*vel*G+part_vel[id].xyz;
+  vec3 final_vel = dt*vel*G+part_vel[id].xyz*damping;
   part_vel[id] = vec4(final_vel,0.0);
 }

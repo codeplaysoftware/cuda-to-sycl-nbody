@@ -27,6 +27,7 @@ uniform_real_distribution<> dis(0, 1);
 
 glm::vec4 random_particle()
 {
+  /*
   glm::vec3 euler; 
   euler.x = dis(rng)*2*M_PI;
   euler.y = acos(2*dis(rng)-1)-M_PI/2;
@@ -36,10 +37,28 @@ glm::vec4 random_particle()
   particle.x = cos(euler.x)*cos(euler.y)*euler.z;
   particle.y = sin(euler.x)*cos(euler.y)*euler.z;
   particle.z = sin(euler.y)*euler.z;
+  */
+
+  glm::vec4 particle;
+  float t = dis(rng)*2*M_PI;
+  float s = dis(rng)*100;
+  particle.x = cos(t)*s;
+  particle.y = sin(t)*s;
+  particle.z = dis(rng)*4;
+
   particle.w = 1.f;
   return particle;
 }
 
+glm::vec4 random_vel(glm::vec4 pos)
+{
+  glm::vec3 vel = glm::cross(glm::vec3(pos),glm::vec3(0,0,1));
+  float orbital_vel = sqrt(2.0*glm::length(vel));
+  vel = glm::normalize(vel)*orbital_vel;
+  return glm::vec4(vel,0.0);
+}
+
+/*
 glm::vec3 temp_to_color(float temp)
 {
   glm::vec3 color;
@@ -82,6 +101,7 @@ glm::vec4 random_color()
   glm::vec3 c = glm::vec3(0.6*t,0.4,1.0);
   return glm::vec4(c*10.f,1.f);
 }
+*/
 
 void program_source(GLuint program, GLenum shader_type, const string &filename)
 {
@@ -138,8 +158,9 @@ void program_link(GLuint program)
 int main(int argc, char **argv)
 {
 
-  size_t num_particles = 8*256;
-  int MAX_ITERATIONS_PER_FRAME = 1;
+  size_t num_particles = 50*256;
+  int MAX_ITERATIONS_PER_FRAME = 4;
+  float damping = 0.9998;
 
   float view_theta = 5*M_PI/4;
   float view_phi = -M_PI/4;
@@ -152,6 +173,9 @@ int main(int argc, char **argv)
 
   if (argc >= 3)
     MAX_ITERATIONS_PER_FRAME = atoi(argv[2]);
+
+  if (argc >= 4)
+    damping = atof(argv[3]);
 
   // Window initialization
   GLFWwindow *window;
@@ -214,12 +238,14 @@ int main(int argc, char **argv)
 
   // VAO init
   // Particle VAO
-  GLuint vao_particles, vbo_pos, vbo_col;
+  GLuint vao_particles, vbo_pos;
+  // Velocity SSBO
+  GLuint velocities;
   glCreateVertexArrays(1, &vao_particles);
   glCreateBuffers(1, &vbo_pos);
-  glCreateBuffers(1, &vbo_col);
+  glCreateBuffers(1, &velocities);
   glVertexArrayVertexBuffer(vao_particles, 0, vbo_pos, 0, sizeof(glm::vec4));
-  glVertexArrayVertexBuffer(vao_particles, 1, vbo_col, 0, sizeof(glm::vec4));
+  glVertexArrayVertexBuffer(vao_particles, 1, velocities, 0, sizeof(glm::vec4));
 
   glEnableVertexArrayAttrib( vao_particles, 0);
   glVertexArrayAttribFormat( vao_particles, 0, 4, GL_FLOAT, GL_FALSE, 0);
@@ -228,6 +254,7 @@ int main(int argc, char **argv)
   glEnableVertexArrayAttrib( vao_particles, 1);
   glVertexArrayAttribFormat( vao_particles, 1, 4, GL_FLOAT, GL_FALSE, 0);
   glVertexArrayAttribBinding(vao_particles, 1, 1);
+
 
   // Deferred VAO
   GLuint vao_deferred, vbo_deferred;
@@ -247,7 +274,7 @@ int main(int argc, char **argv)
     glNamedBufferStorage(vbo_deferred, 3*sizeof(glm::vec2), tri, 0);
   }
 
-  // Pos SSBO init
+  // Pos&vel SSBO init
   {
     vector<glm::vec4> particles_pos(num_particles);
     for (size_t i=0;i<num_particles;++i)
@@ -255,27 +282,11 @@ int main(int argc, char **argv)
       particles_pos[i] = random_particle();
     }
     glNamedBufferStorage(vbo_pos, num_particles*sizeof(glm::vec4), particles_pos.data(), 0);
-  }
 
-  // Color buffer init
-  {
-    vector<glm::vec4> particles_col(num_particles);
-    for (size_t i=0;i<num_particles;++i)
-    {
-      particles_col[i] = random_color();
-    }
-    glNamedBufferStorage(vbo_col, num_particles*sizeof(glm::vec4), particles_col.data(), 0);
-  }
-
-  // Velocity SSBO
-  GLuint velocities;
-  glCreateBuffers(1, &velocities);
-
-  {
     vector<glm::vec4> vel_init(num_particles);
     for (size_t i=0;i<num_particles;++i)
     {
-      vel_init[i] = glm::vec4(0.0);
+      vel_init[i] = random_vel(particles_pos[i]);
     }
     glNamedBufferStorage(velocities, num_particles*sizeof(glm::vec4), vel_init.data(), 0);
   }
@@ -331,6 +342,7 @@ int main(int argc, char **argv)
   // const Uniforms
   glProgramUniform1f(program_interaction, 0, dt);
   glProgramUniform1f(program_interaction, 1, G);
+  glProgramUniform1f(program_interaction, 2, damping);
   glProgramUniform1f(program_integration, 0, dt);
   glProgramUniform2f(program_hdr, 8, tex_size/float(2*width), tex_size/float(2*height));
   glProgramUniform3f(program_highpass, 0, 1.0,1.0,1.0);
