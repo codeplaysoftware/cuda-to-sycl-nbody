@@ -23,7 +23,7 @@ glm::vec4 random_particle_pos()
 
 glm::vec4 random_particle_vel(glm::vec4 pos)
 {
-  // Initial velocity depends on position
+  // Initial velocity is 'orbital' velocity from position
   glm::vec3 vel = glm::cross(glm::vec3(pos),glm::vec3(0,0,1));
   float orbital_vel = sqrt(2.0*glm::length(vel));
   vel = glm::normalize(vel)*orbital_vel;
