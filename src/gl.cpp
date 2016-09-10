@@ -137,11 +137,6 @@ void init_shaders(gl_state &state)
   program_source(state.program_tonemap, GL_FRAGMENT_SHADER,"tonemap.frag" );
   program_link  (state.program_tonemap);
 
-  state.program_highpass = new_program();
-  program_source(state.program_highpass, GL_VERTEX_SHADER,  "deferred.vert");
-  program_source(state.program_highpass, GL_FRAGMENT_SHADER,"highpass.frag");
-  program_link  (state.program_highpass);
-
   state.program_blur = new_program();
   program_source(state.program_blur, GL_VERTEX_SHADER,  "deferred.vert");
   program_source(state.program_blur, GL_FRAGMENT_SHADER,"blur.frag"    );
@@ -152,14 +147,14 @@ void init_fbos(gl_state &state)
 {
   state.blur_downscale = 2;
   
-  glCreateFramebuffers(4, state.fbos);
-  glCreateTextures(GL_TEXTURE_2D, 4, state.attachs);
+  glCreateFramebuffers(3, state.fbos);
+  glCreateTextures(GL_TEXTURE_2D, 3, state.attachs);
 
-  for (int i=0;i<4;++i)
+  for (int i=0;i<3;++i)
   {
     glTextureStorage2D(state.attachs[i], 1, GL_RGBA16F, 
-      (i>1)?state.width/state.blur_downscale:state.width, 
-      (i>1)?state.height/state.blur_downscale:state.height);
+      (i>0)?state.width/state.blur_downscale:state.width, 
+      (i>0)?state.height/state.blur_downscale:state.height);
     glTextureParameteri(state.attachs[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTextureParameteri(state.attachs[i], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTextureParameteri(state.attachs[i], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -178,8 +173,6 @@ void set_uniforms(gl_state &state, sim_param params)
   glProgramUniform2f(state.program_hdr, 8, 
     state.tex_size/float(2*state.width), 
     state.tex_size/float(2*state.height));
-  // Bloom highpass threshold
-  glProgramUniform3f(state.program_highpass, 0, 0.4,0.4,0.4);
   // Blur sample offset length
   glProgramUniform2f(state.program_blur, 0, 
     (float)state.blur_downscale/state.width, 
@@ -217,15 +210,9 @@ void render(gl_state &state, size_t num_particles, glm::mat4 proj_mat, glm::mat4
   glBindVertexArray(state.vao_deferred);
   glDisable(GL_BLEND);
 
-  // Highpass
-  glBindFramebuffer(GL_FRAMEBUFFER, state.fbos[1]);
-  glUseProgram(state.program_highpass);
-  
-  glBindTextureUnit(0, state.attachs[0]);
-  glDrawArrays(GL_TRIANGLES, 0, 3);
-
   glViewport(0,0,state.width/state.blur_downscale, state.height/state.blur_downscale);
   glUseProgram(state.program_blur);
+  
 
   // Blur pingpong (N horizontal blurs then N vertical blurs)
   int loop = 0;
@@ -235,8 +222,8 @@ void render(gl_state &state, size_t num_particles, glm::mat4 proj_mat, glm::mat4
     else      glProgramUniform2f(state.program_blur, 1, 0, 1);
     for (int j=0;j<100;++j)
     {
-      GLuint fbo = state.fbos[(loop%2)+2];
-      GLuint attach = state.attachs[loop?((loop+1)%2+2):1];
+      GLuint fbo = state.fbos[(loop%2)+1];
+      GLuint attach = state.attachs[loop?((loop+1)%2+1):0];
       glBindFramebuffer(GL_FRAMEBUFFER, fbo);
       glBindTextureUnit(0, attach);
       glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -248,6 +235,6 @@ void render(gl_state &state, size_t num_particles, glm::mat4 proj_mat, glm::mat4
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glUseProgram(state.program_tonemap);
   glBindTextureUnit(0, state.attachs[0]);
-  glBindTextureUnit(1, state.attachs[3]);
+  glBindTextureUnit(1, state.attachs[2]);
   glDrawArrays(GL_TRIANGLES, 0, 3);
 }
