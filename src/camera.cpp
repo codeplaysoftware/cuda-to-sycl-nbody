@@ -19,8 +19,10 @@ camera camera_step(camera c)
   c.position.x -= c.velocity.x;
   c.position.y -= c.velocity.y;
   c.position.z *= (1.0-c.velocity.z);
+  c.look_at += c.look_at_vel;
 
   c.velocity *= 0.72; // damping
+  c.look_at_vel *= 0.90;
 
   // limits
   if (c.position.x < 0)       c.position.x += 2*M_PI;
@@ -36,16 +38,42 @@ glm::mat4 camera_get_proj(camera c, int width, int height)
     glm::radians(30.0f),width/(float)height, 1.f);
 }
 
+glm::vec3 get_cartesian_coordinates(glm::vec3 v)
+{
+  return glm::vec3(
+    cos(v.x)*cos(v.y), 
+    sin(v.x)*cos(v.y), 
+    sin(v.y))*v.z;
+}
+
 glm::mat4 camera_get_view(camera c)
 { 
   // polar to cartesian coordinates
-  glm::vec3 view_pos = glm::vec3(
-    cos(c.position.x)*cos(c.position.y), 
-    sin(c.position.x)*cos(c.position.y), 
-    sin(c.position.y))*c.position.z;
+  glm::vec3 view_pos = get_cartesian_coordinates(c.position);
 
   return glm::lookAt(
-    view_pos,
-    glm::vec3(0,0,0),
+    view_pos+c.look_at,
+    c.look_at,
     glm::vec3(0,0,1));
+}
+
+glm::vec3 camera_get_forward(camera c)
+{
+  return glm::normalize(-get_cartesian_coordinates(c.position));
+}
+
+glm::vec3 camera_get_right(camera c)
+{
+  return glm::normalize(
+    glm::cross(
+      get_cartesian_coordinates(c.position),
+      glm::vec3(0,0,1)));
+}
+
+glm::vec3 camera_get_up(camera c)
+{
+  return glm::normalize(
+    glm::cross(
+      get_cartesian_coordinates(c.position),
+      camera_get_right(c)));
 }

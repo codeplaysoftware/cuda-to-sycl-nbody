@@ -5,6 +5,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+const int FBO_MARGIN = 50;
+
 using namespace std;
 
 /// Provides the gl state with window dimensions for fbo size, etc
@@ -152,9 +154,9 @@ void init_fbos(gl_state &state)
 
   for (int i=0;i<3;++i)
   {
-    glTextureStorage2D(state.attachs[i], 1, GL_RGBA16F, 
-      (i>0)?state.width/state.blur_downscale:state.width, 
-      (i>0)?state.height/state.blur_downscale:state.height);
+    glTextureStorage2D(state.attachs[i], 1, GL_RGBA16F,
+      (state.width +2*FBO_MARGIN)/((i>0)?state.blur_downscale:1),
+      (state.height+2*FBO_MARGIN)/((i>0)?state.blur_downscale:1));
     glTextureParameteri(state.attachs[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTextureParameteri(state.attachs[i], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTextureParameteri(state.attachs[i], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -195,6 +197,7 @@ void step_sim(gl_state &state, size_t num_particles)
 void render(gl_state &state, size_t num_particles, glm::mat4 proj_mat, glm::mat4 view_mat)
 {
   // Particle HDR rendering
+  glViewport(0,0,state.width+2*FBO_MARGIN, state.height+2*FBO_MARGIN);
   glBindVertexArray(state.vao_particles);
   glEnable(GL_BLEND);
   glBlendFunc(GL_ONE, GL_ONE);
@@ -210,9 +213,10 @@ void render(gl_state &state, size_t num_particles, glm::mat4 proj_mat, glm::mat4
   glBindVertexArray(state.vao_deferred);
   glDisable(GL_BLEND);
 
-  glViewport(0,0,state.width/state.blur_downscale, state.height/state.blur_downscale);
+  glViewport(0,0,
+    (state.width +2*FBO_MARGIN)/state.blur_downscale, 
+    (state.height+2*FBO_MARGIN)/state.blur_downscale);
   glUseProgram(state.program_blur);
-  
 
   // Blur pingpong (N horizontal blurs then N vertical blurs)
   int loop = 0;

@@ -4,8 +4,10 @@
 
 struct camera
 {
-  glm::vec3 position; ///< Polar coordinates in radians
-  glm::vec3 velocity; ///< dp/dt of polar coordinates
+  glm::vec3 position;    ///< Polar coordinates in radians
+  glm::vec3 velocity;    ///< dp/dt of polar coordinates
+  glm::vec3 look_at;     ///< Where is the camera looking at
+  glm::vec3 look_at_vel; ///< dp/dt of lookat position
 };
 
 /**
@@ -36,3 +38,7 @@ glm::mat4 camera_get_proj(camera c, int width, int height);
  * @param view matrix
  */
 glm::mat4 camera_get_view(camera c);
+
+glm::vec3 camera_get_forward(camera c);
+glm::vec3 camera_get_right(camera c);
+glm::vec3 camera_get_up(camera c);

@@ -27,7 +27,7 @@ using namespace std;
 int main(int argc, char **argv)
 {
   double sensibility = 0.002;
-  float move_speed = 0.5;
+  float move_speed = 0.00005;
 
   sim_param params = sim_param_default();
   params = sim_param_parse_args(params, argc, argv);
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
     double frame_start = glfwGetTime();
 
     // View movement
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT))
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT))
     {
       if (!drag)
       {
@@ -116,6 +116,26 @@ int main(int argc, char **argv)
 
       c.velocity.x += xdiff*sensibility;
       c.velocity.y -= ydiff*sensibility;
+    }
+    else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT))
+    {
+      if (!drag)
+      {
+        glfwGetCursorPos(window, &last_xpos, &last_ypos);
+        drag = true;
+      }
+      double xpos,ypos;
+      double xdiff, ydiff;
+      glfwGetCursorPos(window, &xpos, &ypos);
+      xdiff = xpos - last_xpos;
+      ydiff = ypos - last_ypos;
+
+      last_xpos = xpos;
+      last_ypos = ypos;
+
+      c.look_at_vel += 
+        - (float)xdiff*move_speed*c.position.z*camera_get_right(c)
+        + (float)ydiff*move_speed*c.position.z*camera_get_up(c);
     }
     else drag = false;
 
