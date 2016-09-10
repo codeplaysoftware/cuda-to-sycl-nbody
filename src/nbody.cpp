@@ -133,9 +133,17 @@ int main(int argc, char **argv)
       last_xpos = xpos;
       last_ypos = ypos;
 
+      glm::vec3 xvec = camera_get_right(c);
+      xvec.z = 0.0;
+      xvec = glm::normalize(xvec);
+
+      glm::vec3 yvec = camera_get_up(c);
+      yvec.z = 0.0;
+      yvec = glm::normalize(yvec);
+
       c.look_at_vel += 
-        - (float)xdiff*move_speed*c.position.z*camera_get_right(c)
-        + (float)ydiff*move_speed*c.position.z*camera_get_up(c);
+        - (float)xdiff*move_speed*c.position.z*xvec
+        + (float)ydiff*move_speed*c.position.z*yvec;
     }
     else drag = false;
 
