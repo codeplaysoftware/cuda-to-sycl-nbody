@@ -35,7 +35,7 @@ $(shell $(MKDIR_P) $(OUTPUT_DIR))
 rules=nbody
 
 # DEPENDENCIES FOR BINARIES
-nbody=glad
+nbody=glad shader gen sim_param
 # DEPENDENCIES FOR SRC FILES
 
 # DEBUG
