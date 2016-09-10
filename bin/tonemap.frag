@@ -7,7 +7,7 @@ in vec2 pass_tc;
 
 out vec4 out_color;
 
-float exposure = 1.0;
+float exposure = 4.0;
 
 void main()
 {

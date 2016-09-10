@@ -9,5 +9,6 @@ out vec4 out_color;
 
 void main()
 {
-  out_color = vec4(color.rgb, texture(tex, bary));
+  float alpha = texture(tex, bary).r;
+  out_color = vec4(color.rgb*alpha, 1.0);
 }

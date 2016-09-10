@@ -179,7 +179,7 @@ void set_uniforms(gl_state &state, sim_param params)
     state.tex_size/float(2*state.width), 
     state.tex_size/float(2*state.height));
   // Bloom highpass threshold
-  glProgramUniform3f(state.program_highpass, 0, 1.0,1.0,1.0);
+  glProgramUniform3f(state.program_highpass, 0, 0.4,0.4,0.4);
   // Blur sample offset length
   glProgramUniform2f(state.program_blur, 0, 
     (float)state.blur_downscale/state.width, 
@@ -204,7 +204,7 @@ void render(gl_state &state, size_t num_particles, glm::mat4 proj_mat, glm::mat4
   // Particle HDR rendering
   glBindVertexArray(state.vao_particles);
   glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+  glBlendFunc(GL_ONE, GL_ONE);
   glBindFramebuffer(GL_FRAMEBUFFER, state.fbos[0]);
   glUseProgram(state.program_hdr);
   glClear(GL_COLOR_BUFFER_BIT);
