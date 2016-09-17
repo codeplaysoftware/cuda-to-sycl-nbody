@@ -23,12 +23,14 @@ struct gl_state
   GLuint program_integration; ///< Position integration step
   GLuint program_hdr;         ///< HDR rendering step
   GLuint program_blur;        ///< Bloom blurring step
+  GLuint program_lum;         ///< Average luminance step
   GLuint program_tonemap;     ///< Tonemapping step
 
-  GLuint fbos[3];             ///< FBOs (0 for hdr, 1 & 2 for blur ping pong)
-  GLuint attachs[3];          ///< Respective FBO attachments.
+  GLuint fbos[4];             ///< FBOs (0 for hdr, 1 & 2 for blur ping pong, 3 for luminance)
+  GLuint attachs[4];          ///< Respective FBO attachments.
 
   int tex_size;               ///< Flare texture size in pixels
+  int lum_lod;                ///< Luminance texture level to sample from
   int blur_downscale;         ///< Downscale factor for the blurring step
   int width;                  ///< Viewport width
   int height;                 ///< Viewport height

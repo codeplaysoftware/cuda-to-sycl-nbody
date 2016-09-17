@@ -143,20 +143,41 @@ void init_shaders(gl_state &state)
   program_source(state.program_blur, GL_VERTEX_SHADER,  "deferred.vert");
   program_source(state.program_blur, GL_FRAGMENT_SHADER,"blur.frag"    );
   program_link  (state.program_blur);
+
+  state.program_lum = new_program();
+  program_source(state.program_lum, GL_VERTEX_SHADER  , "deferred.vert");
+  program_source(state.program_lum, GL_FRAGMENT_SHADER, "luminance.frag");
+  program_link  (state.program_lum);
 }
 
 void init_fbos(gl_state &state)
 {
-  state.blur_downscale = 2;
+  int blur_dsc = 2;
+  state.blur_downscale = blur_dsc;
   
-  glCreateFramebuffers(3, state.fbos);
-  glCreateTextures(GL_TEXTURE_2D, 3, state.attachs);
+  glCreateFramebuffers(4, state.fbos);
+  glCreateTextures(GL_TEXTURE_2D, 4, state.attachs);
 
-  for (int i=0;i<3;++i)
+  int base_width  = state.width +2*FBO_MARGIN;
+  int base_height = state.height+2*FBO_MARGIN;
+
+  int widths [] = { base_width,
+                    base_width/blur_dsc,
+                    base_width/blur_dsc,
+                    base_width/2};
+
+  int heights[] = { base_height,
+                    base_height/blur_dsc,
+                    base_height/blur_dsc,
+                    base_height/2};
+
+  state.lum_lod = (int)floor(log2(max(base_width,base_height)/2))-1;
+  int mipmaps[] = { 1, 1, 1, state.lum_lod+1};
+  GLenum types[] = {GL_RGBA16F, GL_RGBA16F, GL_RGBA16F, GL_R16F};
+
+  for (int i=0;i<4;++i)
   {
-    glTextureStorage2D(state.attachs[i], 1, GL_RGBA16F,
-      (state.width +2*FBO_MARGIN)/((i>0)?state.blur_downscale:1),
-      (state.height+2*FBO_MARGIN)/((i>0)?state.blur_downscale:1));
+    glTextureStorage2D(state.attachs[i], mipmaps[i], types[i], widths[i], heights[i]);
     glTextureParameteri(state.attachs[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTextureParameteri(state.attachs[i], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTextureParameteri(state.attachs[i], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -234,11 +255,24 @@ void render(gl_state &state, size_t num_particles, glm::mat4 proj_mat, glm::mat4
       loop++;
     }
   }
+
+  // Average luminance
+  glViewport(0,0,
+    (state.width +2*FBO_MARGIN)/2, 
+    (state.height+2*FBO_MARGIN)/2);
+  glBindFramebuffer(GL_FRAMEBUFFER, state.fbos[3]);
+  glUseProgram(state.program_lum);
+  glProgramUniform1i(state.program_lum, 0, state.lum_lod);
+  glBindTextureUnit(0, state.attachs[0]);
+  glDrawArrays(GL_TRIANGLES, 0, 3);
+  glGenerateTextureMipmap(state.attachs[3]);
+
   // Tonemapping step (direct to screen)
   glViewport(0,0,state.width,state.height);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glUseProgram(state.program_tonemap);
   glBindTextureUnit(0, state.attachs[0]);
   glBindTextureUnit(1, state.attachs[2]);
+  glBindTextureUnit(2, state.attachs[3]);
   glDrawArrays(GL_TRIANGLES, 0, 3);
 }
