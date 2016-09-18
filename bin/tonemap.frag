@@ -19,7 +19,7 @@ void main()
   vec3 color = texelFetch(hdr,coord,0).rgb;
 
   float luminance = textureLod(lum, vec2(0.5), lum_lod).r;
-  float exposure = 1.0/luminance;
+  float exposure = 1.0/clamp(luminance*10, 0.2,1000.0);
 
   color += texture(bloom, vec2(coord)/textureSize(hdr, 0)).rgb;
   vec3 tonemap = vec3(1.0)- exp(-color*exposure);

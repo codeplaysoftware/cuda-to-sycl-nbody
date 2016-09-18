@@ -171,14 +171,15 @@ void init_fbos(gl_state &state)
                     base_height/blur_dsc,
                     base_height/2};
 
-  state.lum_lod = (int)floor(log2(max(base_width,base_height)/2))-1;
+  state.lum_lod = (int)floor(log2(max(base_width,base_height)/2));
   int mipmaps[] = { 1, 1, 1, state.lum_lod+1};
   GLenum types[] = {GL_RGBA16F, GL_RGBA16F, GL_RGBA16F, GL_R16F};
+  GLenum min_filters[] = {GL_LINEAR, GL_LINEAR,GL_LINEAR,GL_LINEAR_MIPMAP_LINEAR};
 
   for (int i=0;i<4;++i)
   {
     glTextureStorage2D(state.attachs[i], mipmaps[i], types[i], widths[i], heights[i]);
-    glTextureParameteri(state.attachs[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTextureParameteri(state.attachs[i], GL_TEXTURE_MIN_FILTER, min_filters[i]);
     glTextureParameteri(state.attachs[i], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTextureParameteri(state.attachs[i], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glNamedFramebufferTexture(state.fbos[i], GL_COLOR_ATTACHMENT0, state.attachs[i], 0);
@@ -262,7 +263,6 @@ void render(gl_state &state, size_t num_particles, glm::mat4 proj_mat, glm::mat4
     (state.height+2*FBO_MARGIN)/2);
   glBindFramebuffer(GL_FRAMEBUFFER, state.fbos[3]);
   glUseProgram(state.program_lum);
-  glProgramUniform1i(state.program_lum, 0, state.lum_lod);
   glBindTextureUnit(0, state.attachs[0]);
   glDrawArrays(GL_TRIANGLES, 0, 3);
   glGenerateTextureMipmap(state.attachs[3]);
@@ -271,6 +271,7 @@ void render(gl_state &state, size_t num_particles, glm::mat4 proj_mat, glm::mat4
   glViewport(0,0,state.width,state.height);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glUseProgram(state.program_tonemap);
+  glProgramUniform1i(state.program_tonemap, 0, state.lum_lod);
   glBindTextureUnit(0, state.attachs[0]);
   glBindTextureUnit(1, state.attachs[2]);
   glBindTextureUnit(2, state.attachs[3]);
