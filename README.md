@@ -21,7 +21,7 @@ Don't bother with building, download the latest release binaries. Or use MSYS2. 
 ### Simulation
 Two buffers are created to hold the position and velocity data of particles. 'Random' data is fed into these buffers for initialization, in the shape of a thick disk.
 
-They are two steps to compute the N-body simulation:
+There are two steps to compute the N-body simulation:
 #### Interaction
 This compute shader runs for each particle and computes the gravitational contribution of all other particles. An epsilon value is chosen so particles don't fly away at lightspeed, some damping is applied to grossly approximate interstellar medium. Chunks of particles are loaded into shared memory to make it work like a handcrafted cache and boost the performance. This pass only updates the particles' velocities.
 #### Integration
