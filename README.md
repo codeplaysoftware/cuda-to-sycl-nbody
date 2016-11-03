@@ -9,12 +9,15 @@ Started off as a little compute shader exercise to warm me up, went on because I
 
 Graphics inspired by [AndreasReiten's qtvknbody](https://github.com/AndreasReiten/qtvknbody/)
 
-## Installation
+## Building
+CMake, GLM, GLFW and GLEW are required.
+
+    mkdir -p build
+    cd build
+    cmake ..
+    make
+
 Remember that you need an OpenGL 4.5 ready graphics card. Radeon 7xxx or Geforce GTX 4xx. No OSX. Maybe Intel.
-### Linux
-Requires pkg-config, glfw3 and glm. Could require some `make clean` or `rm -rf obj/` because my Makefiles aren't generally great. Binaries are in the `bin/` folder.
-### Windows
-Don't bother with building, download the latest release binaries. Or use MSYS2. No refunds.
 
 ## Pipeline
 
