@@ -2,30 +2,27 @@
 
 #include <cstdlib>
 
-sim_param sim_param_default()
+sim_param::sim_param()
 {
-  sim_param p;
-  p.G = 2.0;
-  p.frame_time = 1.0/60.0; // 60 fps
-  p.dt = 0.005;
-  p.num_particles = 50*256;
-  p.max_iterations_per_frame = 4;
-  p.damping = 0.999998;
-  return p;
+  G = 2.0;
+  frame_time = 1.0/60.0; // 60 fps
+  dt = 0.005;
+  num_particles = 50*256;
+  max_iterations_per_frame = 4;
+  damping = 0.999998;
 }
 
-sim_param sim_param_parse_args(sim_param p, int argc, char **argv)
+void sim_param::parse_args(int argc, char **argv)
 {
   // First argument if existing = number of particle batches (256 per batch)
   if (argc >= 2)
-    p.num_particles = 256*atoi(argv[1]);
+    num_particles = 256*atoi(argv[1]);
 
   // Second argument if existing = number of iterations per frame
   if (argc >= 3)
-    p.max_iterations_per_frame = atoi(argv[2]);
+    max_iterations_per_frame = atoi(argv[2]);
 
   // Third argument if existing = damping parameter
   if (argc >= 4)
-    p.damping = atof(argv[3]);
-  return p;
+    damping = atof(argv[3]);
 }
