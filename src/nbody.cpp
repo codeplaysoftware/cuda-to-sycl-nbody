@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include <glad/glad.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
@@ -29,8 +29,8 @@ int main(int argc, char **argv)
   double sensibility = 0.002;
   float move_speed = 0.00005;
 
-  sim_param params = sim_param_default();
-  params = sim_param_parse_args(params, argc, argv);
+  sim_param params;
+  params.parse_args(argc, argv);
 
   // Window initialization
   GLFWwindow *window;
@@ -60,7 +60,8 @@ int main(int argc, char **argv)
 
   // OpenGL initialization
 
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+  GLenum error = glewInit();
+  if (error != GLEW_OK)
   {
     cerr << "Can't load GL" << endl;
     return -1;

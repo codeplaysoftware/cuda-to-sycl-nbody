@@ -121,32 +121,32 @@ void populate_particles(gl_state &state, const vector<glm::vec4> pos, const vect
 void init_shaders(gl_state &state)
 {
   state.program_interaction = new_program();
-  program_source(state.program_interaction, GL_COMPUTE_SHADER, "interaction.comp");
+  program_source(state.program_interaction, GL_COMPUTE_SHADER, "shaders/interaction.comp");
   program_link  (state.program_interaction);
 
   state.program_integration = new_program();
-  program_source(state.program_integration, GL_COMPUTE_SHADER, "integration.comp");
+  program_source(state.program_integration, GL_COMPUTE_SHADER, "shaders/integration.comp");
   program_link  (state.program_integration);
 
   state.program_hdr = new_program();
-  program_source(state.program_hdr, GL_VERTEX_SHADER  , "main.vert");
-  program_source(state.program_hdr, GL_FRAGMENT_SHADER, "main.frag");
-  program_source(state.program_hdr, GL_GEOMETRY_SHADER, "main.geom");
+  program_source(state.program_hdr, GL_VERTEX_SHADER  , "shaders/main.vert");
+  program_source(state.program_hdr, GL_FRAGMENT_SHADER, "shaders/main.frag");
+  program_source(state.program_hdr, GL_GEOMETRY_SHADER, "shaders/main.geom");
   program_link  (state.program_hdr);
 
   state.program_tonemap = new_program();
-  program_source(state.program_tonemap, GL_VERTEX_SHADER,  "deferred.vert");
-  program_source(state.program_tonemap, GL_FRAGMENT_SHADER,"tonemap.frag" );
+  program_source(state.program_tonemap, GL_VERTEX_SHADER,  "shaders/deferred.vert");
+  program_source(state.program_tonemap, GL_FRAGMENT_SHADER,"shaders/tonemap.frag" );
   program_link  (state.program_tonemap);
 
   state.program_blur = new_program();
-  program_source(state.program_blur, GL_VERTEX_SHADER,  "deferred.vert");
-  program_source(state.program_blur, GL_FRAGMENT_SHADER,"blur.frag"    );
+  program_source(state.program_blur, GL_VERTEX_SHADER,  "shaders/deferred.vert");
+  program_source(state.program_blur, GL_FRAGMENT_SHADER,"shaders/blur.frag"    );
   program_link  (state.program_blur);
 
   state.program_lum = new_program();
-  program_source(state.program_lum, GL_VERTEX_SHADER  , "deferred.vert");
-  program_source(state.program_lum, GL_FRAGMENT_SHADER, "luminance.frag");
+  program_source(state.program_lum, GL_VERTEX_SHADER  , "shaders/deferred.vert");
+  program_source(state.program_lum, GL_FRAGMENT_SHADER, "shaders/luminance.frag");
   program_link  (state.program_lum);
 }
 
