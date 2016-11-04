@@ -1,6 +1,6 @@
 project (nbody)
 
-add_executable(nbody nbody.cpp camera.cpp sim_param.cpp gen.cpp gl.cpp shader.cpp)
+add_executable(nbody nbody.cpp camera.cpp sim_param.cpp gen.cpp renderer_gl.cpp shader.cpp)
 
 target_compile_features(nbody PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
 

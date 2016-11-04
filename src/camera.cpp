@@ -5,40 +5,36 @@
 
 using namespace std;
 
-camera new_camera()
+Camera::Camera()
 {
-  camera c;
-  c.position.x = 0;
-  c.position.y = M_PI/4;
-  c.position.z = 50.0;
-  return c;
+  position.x = 0;
+  position.y = M_PI/4;
+  position.z = 50.0;
 }
 
-camera camera_step(camera c)
+void Camera::step()
 {
-  c.position.x -= c.velocity.x;
-  c.position.y -= c.velocity.y;
-  c.position.z *= (1.0-c.velocity.z);
-  c.look_at += c.look_at_vel;
+  position.x -= velocity.x;
+  position.y -= velocity.y;
+  position.z *= (1.0-velocity.z);
+  look_at += look_at_vel;
 
-  c.velocity *= 0.72; // damping
-  c.look_at_vel *= 0.90;
+  velocity *= 0.72; // damping
+  look_at_vel *= 0.90;
 
   // limits
-  if (c.position.x < 0)       c.position.x += 2*M_PI;
-  if (c.position.x >= 2*M_PI) c.position.x -= 2*M_PI;
-  c.position.y = max(-(float)M_PI/2+0.001f, min(c.position.y, (float)M_PI/2-0.001f));
-
-  return c;
+  if (position.x < 0)       position.x += 2*M_PI;
+  if (position.x >= 2*M_PI) position.x -= 2*M_PI;
+  position.y = max(-(float)M_PI/2+0.001f, min(position.y, (float)M_PI/2-0.001f));
 }
 
-glm::mat4 camera_get_proj(camera c, int width, int height)
+glm::mat4 Camera::getProj(int width, int height)
 {
   return glm::infinitePerspective(
     glm::radians(30.0f),width/(float)height, 1.f);
 }
 
-glm::vec3 get_cartesian_coordinates(glm::vec3 v)
+glm::vec3 getCartesianCoordinates(glm::vec3 v)
 {
   return glm::vec3(
     cos(v.x)*cos(v.y), 
@@ -46,34 +42,50 @@ glm::vec3 get_cartesian_coordinates(glm::vec3 v)
     sin(v.y))*v.z;
 }
 
-glm::mat4 camera_get_view(camera c)
+glm::mat4 Camera::getView()
 { 
   // polar to cartesian coordinates
-  glm::vec3 view_pos = get_cartesian_coordinates(c.position);
+  glm::vec3 view_pos = getCartesianCoordinates(position);
 
   return glm::lookAt(
-    view_pos+c.look_at,
-    c.look_at,
+    view_pos+look_at,
+    look_at,
     glm::vec3(0,0,1));
 }
 
-glm::vec3 camera_get_forward(camera c)
+glm::vec3 Camera::getForward()
 {
-  return glm::normalize(-get_cartesian_coordinates(c.position));
+  return glm::normalize(-getCartesianCoordinates(position));
 }
 
-glm::vec3 camera_get_right(camera c)
+glm::vec3 Camera::getRight()
 {
   return glm::normalize(
     glm::cross(
-      get_cartesian_coordinates(c.position),
+      getCartesianCoordinates(position),
       glm::vec3(0,0,1)));
 }
 
-glm::vec3 camera_get_up(camera c)
+glm::vec3 Camera::getUp()
 {
   return glm::normalize(
     glm::cross(
-      get_cartesian_coordinates(c.position),
-      camera_get_right(c)));
+      getCartesianCoordinates(position),
+      getRight()));
 }
+
+void Camera::addVelocity(glm::vec3 vel)
+{
+  velocity += vel;
+}
+
+void Camera::addLookAtVelocity(glm::vec3 vel)
+{
+  look_at_vel += vel;
+}
+
+glm::vec3 Camera::getPosition()
+{
+  return position;
+}
+

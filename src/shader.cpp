@@ -7,13 +7,12 @@
 
 using namespace std;
 
-GLuint new_program()
-{
-  return glCreateProgram();
-}
+ShaderProgram::ShaderProgram() : id(0) {}
 
-void program_source(GLuint program, GLenum shader_type, const string &filename)
+void ShaderProgram::source(GLenum shader_type, const string &filename)
 {
+  if (!id) id = glCreateProgram();
+
   string code;
 
   // IO stuff
@@ -30,7 +29,7 @@ void program_source(GLuint program, GLenum shader_type, const string &filename)
   }
   catch (ifstream::failure e)
   {
-    cerr << "Can't open " << filename << " : " << e.what() << endl;
+    throw std::runtime_error(std::string("Can't open ") + filename + std::string(e.what()));
   }
 
   GLint success;
@@ -47,23 +46,25 @@ void program_source(GLuint program, GLenum shader_type, const string &filename)
   {
     // error log
     glGetShaderInfoLog(shad_id, sizeof(info_log), NULL, info_log);
-    cerr << "Can't compile " <<  filename << " " << info_log << endl;
+    throw std::runtime_error(std::string("Can't compile ") + filename + " " + info_log);
     exit(-1);
   }
-  glAttachShader(program, shad_id);
+  glAttachShader(id, shad_id);
 }
 
-void program_link(GLuint program)
+void ShaderProgram::link()
 {
   GLint success;
   GLchar info_log[2048];
 
-  glLinkProgram(program);
-  glGetProgramiv(program, GL_LINK_STATUS, &success);
+  glLinkProgram(id);
+  glGetProgramiv(id, GL_LINK_STATUS, &success);
   if (!success)
   {
     // error log
-    glGetProgramInfoLog(program, sizeof(info_log), NULL, info_log);
-    cerr << "Can't link :" << info_log << endl;
+    glGetProgramInfoLog(id, sizeof(info_log), NULL, info_log);
+    throw std::runtime_error(std::string("Can't link ") + std::string(info_log));
   }
 }
+
+GLuint ShaderProgram::getId() { return id; }

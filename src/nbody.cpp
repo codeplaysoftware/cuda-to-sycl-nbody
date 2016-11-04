@@ -12,7 +12,7 @@
 
 #include "sim_param.hpp"
 #include "gen.hpp"
-#include "gl.hpp"
+#include "renderer.hpp"
 #include "camera.hpp"
 
 double scroll = 0;
@@ -26,7 +26,7 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-  double sensibility = 0.002;
+  float sensibility = 0.002;
   float move_speed = 0.00005;
 
   sim_param params;
@@ -67,8 +67,8 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  gl_state state;
-  init(state, width, height, params);
+  Renderer renderer;
+  renderer.init(width, height, params);
 
   // Pos&vel init
   {
@@ -82,10 +82,10 @@ int main(int argc, char **argv)
       particles_pos[i] = p;
       particles_vel[i] = v;
     }
-    populate_particles(state, particles_pos, particles_vel);
+    renderer.populateParticles(particles_pos, particles_vel);
   }
 
-  camera c = new_camera();
+  Camera camera;
 
   // Mouse information
   double last_xpos, last_ypos;
@@ -115,8 +115,7 @@ int main(int argc, char **argv)
       last_xpos = xpos;
       last_ypos = ypos;
 
-      c.velocity.x += xdiff*sensibility;
-      c.velocity.y -= ydiff*sensibility;
+      camera.addVelocity(glm::vec3(xdiff, -ydiff, 0)*sensibility);
     }
     else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT))
     {
@@ -134,32 +133,34 @@ int main(int argc, char **argv)
       last_xpos = xpos;
       last_ypos = ypos;
 
-      glm::vec3 xvec = camera_get_right(c);
+      glm::vec3 xvec = camera.getRight();
       xvec.z = 0.0;
       xvec = glm::normalize(xvec);
 
-      glm::vec3 yvec = camera_get_up(c);
+      glm::vec3 yvec = camera.getUp();
       yvec.z = 0.0;
       yvec = glm::normalize(yvec);
 
-      c.look_at_vel += 
-        - (float)xdiff*move_speed*c.position.z*xvec
-        + (float)ydiff*move_speed*c.position.z*yvec;
+      float dist = camera.getPosition().z;
+
+      camera.addLookAtVelocity(
+        - (float)xdiff*move_speed*dist*xvec
+        + (float)ydiff*move_speed*dist*yvec );
     }
     else drag = false;
 
     // Scrolling
-    c.velocity.z += scroll*0.02;
+    camera.addVelocity(glm::vec3(0,0,scroll*0.02));
     scroll = 0;
 
-    c = camera_step(c);
+    camera.step();
 
     for (int i=0;i<params.max_iterations_per_frame;++i)
     {
-      step_sim(state, params.num_particles);
+      renderer.stepSim(params.num_particles);
     }
 
-    render(state, params.num_particles, camera_get_proj(c, width, height), camera_get_view(c));
+    renderer.render(params.num_particles, camera.getProj(width, height), camera.getView());
 
     // Window refresh
     glfwSwapBuffers(window);
