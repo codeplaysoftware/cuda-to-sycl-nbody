@@ -1,5 +1,14 @@
 #pragma once
 
+#ifdef USE_OPENGL
+#include <GL/glew.h>
+#else
+#ifdef USE_VULKAN
+#include <vulkan/vulkan.h>
+#endif
+#endif
+#include <GLFW/glfw3.h>
+
 #include <vector>
 #include <glm/glm.hpp>
 
@@ -13,9 +22,11 @@ class Renderer
 public:
 	Renderer();
 	~Renderer();
+
+	void initWindow(GLFWwindow *window);
+
 	/**
 	 * Initializes the gl state
-	 * @param state
 	 * @param width viewport width
 	 * @param height viewport height
 	 * @param params simulation parameters
@@ -33,19 +44,15 @@ public:
 
 	/**
 	 * Steps the simulation once, with the parameters provided with @see init
-	 * @param state
-	 * @param num_particles number of particles to simulate
 	 */
-	void stepSim(size_t num_particles);
+	void stepSim();
 
 	/**
 	 * Renders the particles at the current step
-	 * @param state
-	 * @param num_particles number of particles to render
 	 * @param proj_mat projection matrix @see camera_get_proj
 	 * @param view_mat view matrix @see camera_get_view
 	 */
-	void render(size_t num_particles, glm::mat4 proj_mat, glm::mat4 view_mat);
+	void render(glm::mat4 proj_mat, glm::mat4 view_mat);
 
 private:
 	RendererImpl *impl;

@@ -1,10 +1,14 @@
 #include "renderer.hpp"
 
 #include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
 #include "shader.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include <stdexcept>
 
 const int FBO_MARGIN = 50;
 
@@ -38,6 +42,8 @@ struct RendererImpl
   int blur_downscale;         ///< Downscale factor for the blurring step
   int width;                  ///< Viewport width
   int height;                 ///< Viewport height
+
+  size_t num_particles;
 };
 
 Renderer::Renderer()
@@ -48,6 +54,13 @@ Renderer::Renderer()
 Renderer::~Renderer()
 {
   delete impl;
+}
+
+void Renderer::initWindow(GLFWwindow *window)
+{
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 }
 
 /// Provides the gl state with window dimensions for fbo size, etc
@@ -70,6 +83,14 @@ void setUniforms(RendererImpl *impl, sim_param params);
 
 void Renderer::init(int width, int height, sim_param params)
 {
+  // OpenGL initialization
+  GLenum error = glewInit();
+  if (error != GLEW_OK)
+  {
+    throw std::runtime_error("Can't load GL");
+  }
+  
+  impl->num_particles = params.num_particles;
   setWindowDimensions(impl, width, height);
   CreateFlareTexture(impl);
   createVaosVbos(impl);
@@ -238,20 +259,20 @@ void setUniforms(RendererImpl *impl, sim_param params)
     (float)impl->blur_downscale/impl->height);
 }
 
-void Renderer::stepSim(size_t num_particles)
+void Renderer::stepSim()
 {
   // Interaction step
   glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
   glUseProgram(impl->program_interaction.getId());
-  glDispatchCompute(num_particles/256, 1, 1);
+  glDispatchCompute(impl->num_particles/256, 1, 1);
 
   // Integration step
   glUseProgram(impl->program_integration.getId());
   glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-  glDispatchCompute(num_particles/256, 1, 1);
+  glDispatchCompute(impl->num_particles/256, 1, 1);
 }
 
-void Renderer::render(size_t num_particles, glm::mat4 proj_mat, glm::mat4 view_mat)
+void Renderer::render(glm::mat4 proj_mat, glm::mat4 view_mat)
 {
   // Particle HDR rendering
   glViewport(0,0,impl->width+2*FBO_MARGIN, impl->height+2*FBO_MARGIN);
@@ -265,7 +286,7 @@ void Renderer::render(size_t num_particles, glm::mat4 proj_mat, glm::mat4 view_m
   glProgramUniformMatrix4fv(impl->program_hdr.getId(), 4, 1, GL_FALSE, glm::value_ptr(proj_mat));
   glBindTextureUnit(0, impl->flare_tex);
   glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
-  glDrawArrays(GL_POINTS, 0, num_particles);
+  glDrawArrays(GL_POINTS, 0, impl->num_particles);
 
   glBindVertexArray(impl->vao_deferred);
   glDisable(GL_BLEND);
