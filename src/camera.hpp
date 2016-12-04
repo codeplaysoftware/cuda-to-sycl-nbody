@@ -42,9 +42,9 @@ public:
 
 
 private:
-  glm::vec3 position;    ///< Polar coordinates in radians
-  glm::vec3 velocity;    ///< dp/dt of polar coordinates
-  glm::vec3 look_at;     ///< Where is the camera looking at
-  glm::vec3 look_at_vel; ///< dp/dt of lookat position
+	glm::vec3 position;    ///< Polar coordinates in radians
+	glm::vec3 velocity;    ///< dp/dt of polar coordinates
+	glm::vec3 look_at;     ///< Where is the camera looking at
+	glm::vec3 look_at_vel; ///< dp/dt of lookat position
 };
 

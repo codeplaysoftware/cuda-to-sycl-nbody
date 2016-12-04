@@ -4,9 +4,19 @@ find_package(GLEW)
 find_package(OpenGL)
 find_package(Vulkan)
 
-set(COMMON_SOURCE nbody.cpp camera.cpp sim_param.cpp gen.cpp)
-set(OPENGL_SOURCE renderer_gl.cpp shader.cpp)
-set(VULKAN_SOURCE renderer_vk.cpp)
+set(COMMON_SOURCE 
+	nbody.cpp 
+	camera.cpp 
+	sim_param.cpp 
+	gen.cpp)
+
+set(OPENGL_SOURCE 
+	renderer_gl.cpp 
+	shader.cpp)
+
+set(VULKAN_SOURCE 
+	renderer_vk.cpp 
+	vulkan_app.cpp)
 
 project (nbody)
 
@@ -27,7 +37,14 @@ endif()
 
 if (VULKAN_FOUND)
 	add_executable(nbodyvk ${COMMON_SOURCE} ${VULKAN_SOURCE})
-	target_compile_definitions(nbodyvk PRIVATE -DUSE_VULKAN)
+	set(COMPILE_DEFS -DUSE_VULKAN)
+
+	if (CMAKE_BUILD_TYPE MATCHES Debug)
+		message("Validation layers activated")
+		set(COMPILE_DEFS ${COMPILE_DEFS} -DUSE_VALIDATION_LAYERS)
+	endif()
+
+	target_compile_definitions(nbodyvk PRIVATE ${COMPILE_DEFS})
 
 	target_compile_features(nbodyvk PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
 

@@ -2,9 +2,11 @@
 
 #ifdef USE_OPENGL
 #include <GL/glew.h>
+#include "renderer_gl.hpp"
 #else
 #ifdef USE_VULKAN
 #include <vulkan/vulkan.h>
+#include "renderer_vk.hpp"
 #endif
 #endif
 #include <GLFW/glfw3.h>
@@ -18,7 +20,6 @@
 
 #include "sim_param.hpp"
 #include "gen.hpp"
-#include "renderer.hpp"
 #include "camera.hpp"
 
 double scroll = 0;
@@ -35,8 +36,8 @@ int main(int argc, char **argv)
 	float sensibility = 0.002;
 	float move_speed = 0.00005;
 
-	sim_param params;
-	params.parse_args(argc, argv);
+	SimParam params;
+	params.parseArgs(argc, argv);
 
 	// Window initialization
 	GLFWwindow *window;
@@ -53,31 +54,40 @@ int main(int argc, char **argv)
 	glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-	Renderer renderer;
-	renderer.initWindow(window);
+#ifdef USE_OPENGL
+	RendererGL renderer;
+#else
+#ifdef USE_VULKAN
+	RendererVk renderer;
+#endif
+#endif
+
+	renderer.initWindow();
 
 	int width = mode->width;
 	int height = mode->height-30;
+	width = 800;
+	height = 600;
 	window = glfwCreateWindow(width, height, "N-Body Simulation", NULL, NULL);
 
 	glfwMakeContextCurrent(window);
 	glfwSetScrollCallback(window, scroll_callback);
 
-	renderer.init(width, height, params);
+	renderer.init(window, width, height, params);
 
 	// Pos&vel init
 	{
-		vector<glm::vec4> particles_pos(params.num_particles);
-		vector<glm::vec4> particles_vel(params.num_particles);
-		for (size_t i=0;i<params.num_particles;++i)
+		vector<glm::vec4> particlesPos(params.numParticles);
+		vector<glm::vec4> particlesVel(params.numParticles);
+		for (size_t i=0;i<params.numParticles;++i)
 		{
-			glm::vec4 p = random_particle_pos();
-			glm::vec4 v = random_particle_vel(p);
+			glm::vec4 p = randomParticlePos();
+			glm::vec4 v = randomParticleVel(p);
 
-			particles_pos[i] = p;
-			particles_vel[i] = v;
+			particlesPos[i] = p;
+			particlesVel[i] = v;
 		}
-		renderer.populateParticles(particles_pos, particles_vel);
+		renderer.populateParticles(particlesPos, particlesVel);
 	}
 
 	Camera camera;
@@ -150,11 +160,7 @@ int main(int argc, char **argv)
 
 		camera.step();
 
-		for (int i=0;i<params.max_iterations_per_frame;++i)
-		{
-			renderer.stepSim();
-		}
-
+		renderer.stepSim();
 		renderer.render(camera.getProj(width, height), camera.getView());
 
 		// Window refresh
@@ -164,13 +170,13 @@ int main(int argc, char **argv)
 		// Thread sleep to match min frame time
 		double frame_end = glfwGetTime();
 		double elapsed = frame_end - frame_start;
-		if (elapsed < params.frame_time) 
+		if (elapsed < params.frameTime) 
 		{
 			this_thread::sleep_for(chrono::nanoseconds(
-				(long int)((params.frame_time-elapsed)*1000000000)));
+				(long int)((params.frameTime-elapsed)*1000000000)));
 		}
 	}
-
+	renderer.destroy();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;

@@ -14,16 +14,11 @@
 
 #include "sim_param.hpp"
 
-struct RendererImpl;
-
 class Renderer
 {
 
 public:
-	Renderer();
-	~Renderer();
-
-	void initWindow(GLFWwindow *window);
+	virtual void initWindow()=0;
 
 	/**
 	 * Initializes the gl state
@@ -31,30 +26,29 @@ public:
 	 * @param height viewport height
 	 * @param params simulation parameters
 	 */
-	void init(int width, int height, sim_param params);
+	virtual void init(GLFWwindow *window, int width, int height, SimParam params)=0;
+
+	virtual void destroy()=0;
 
 	/**
 	 * Supplies the gl state with initial particle position and velocity
 	 * @param pos particle positions
 	 * @param vel particle velocities
 	 */
-	void populateParticles( 
+	virtual void populateParticles( 
 		const std::vector<glm::vec4> pos, 
-		const std::vector<glm::vec4> vel);
+		const std::vector<glm::vec4> vel)=0;
 
 	/**
 	 * Steps the simulation once, with the parameters provided with @see init
 	 */
-	void stepSim();
+	virtual void stepSim()=0;
 
 	/**
 	 * Renders the particles at the current step
 	 * @param proj_mat projection matrix @see camera_get_proj
 	 * @param view_mat view matrix @see camera_get_view
 	 */
-	void render(glm::mat4 proj_mat, glm::mat4 view_mat);
-
-private:
-	RendererImpl *impl;
+	virtual void render(glm::mat4 projMat, glm::mat4 viewMat)=0;
 
 };
