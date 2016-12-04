@@ -168,7 +168,7 @@ void RendererVk::createResources()
 
 	hdrUBOOffset = 0;
 	hdrUBOSize = sizeof(HdrUBO);
-	computeUBOOffset = align(hdrUBOOffset+hdrUBOSize, minAlignUBO);
+	computeUBOOffset = align(hdrUBOOffset+hdrUBOSize, minAlignSSBO);
 	computeUBOSize = sizeof(ComputeUBO);
 	computePositionSSBOOffset = align(computeUBOOffset+computeUBOSize, minAlignSSBO);
 	computePositionSSBOSize = sizeof(glm::vec4)*params.numParticles;
@@ -491,7 +491,7 @@ void RendererVk::createDescriptorLayouts()
 	// Parameters UBO
 	binding = {};
 	binding.binding = 0;
-	binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	binding.descriptorCount = 1;
 	binding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
 	bindings.push_back(binding);
@@ -524,8 +524,8 @@ void RendererVk::createDescriptorPool()
 {
 	// Pool sizes
 	std::vector<VkDescriptorPoolSize> poolSizes;
-	poolSizes.push_back({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2});
-	poolSizes.push_back({VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2});
+	poolSizes.push_back({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
+	poolSizes.push_back({VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3});
 	poolSizes.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
 
 	VkDescriptorPoolCreateInfo createInfo = {};
@@ -603,7 +603,7 @@ void RendererVk::updateDescriptors()
 	write.dstBinding = 0;
 	write.dstArrayElement = 0;
 	write.descriptorCount = 1;
-	write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	write.pBufferInfo = &computeParamInfo;
 	writes.push_back(write);
 
