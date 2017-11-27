@@ -33,7 +33,7 @@ From the new velocities, the particles' positions are computed. That's all. This
 ### Rendering
 Render targets for all passes except the last use dimensions a bit larger than the window, to prevent popping. This is used when some effects affect neighboring pixels (bloom, ssao..) and must be taken into account even when off-screen.
 #### HDR
-Each particle is rendered as a fixed-size flare, generated from a gaussian. Particle color depends on velocity, blue at low speeds and purple at high speeds. Additive blending is set, so dense regions look bright. The render target is RGBA16F, because RGB_10F_11F_11F looks yellow on subsequent render passes.
+Each particle is rendered as a fixed-size flare, generated from a gaussian. Particle color depends on velocity, blue at low speeds and purple at high speeds. Additive blending is set, so dense regions look bright. The render target is RGBA16F, because GL_R11F_G11F_B10F looks yellow on subsequent render passes.
 
 #### Bloom
 No highpass step since I think all stars should 'shine': no bloom around a flare looks dull. Two RGBA16F half-resolution render targets are used for multiple gaussian blur passes (ping pong targets). It is only a 5-tap blur but it's better for locality even at the cost of several more passes. Horizontal blur passes first, vertical last, to prevent expensive shader switches.
