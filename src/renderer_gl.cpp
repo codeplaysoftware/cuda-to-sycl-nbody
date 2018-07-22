@@ -96,8 +96,8 @@ void RendererGL::createVaosVbos()
 void RendererGL::populateParticles(const vector<glm::vec4> pos, const vector<glm::vec4> vel)
 {
   // SSBO allocation & data upload
-  glNamedBufferStorage(vboParticlesPos, pos.size()*sizeof(glm::vec4), pos.data(), 0);
-  glNamedBufferStorage(ssboVelocities , vel.size()*sizeof(glm::vec4), vel.data(), 0);
+  glNamedBufferStorage(vboParticlesPos, pos.size()*sizeof(glm::vec4), pos.data(), GL_MAP_READ_BIT);
+  glNamedBufferStorage(ssboVelocities , vel.size()*sizeof(glm::vec4), vel.data(), GL_MAP_READ_BIT);
 
   // SSBO binding
   glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, vboParticlesPos, 

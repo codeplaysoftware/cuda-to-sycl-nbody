@@ -42,7 +42,16 @@ int main(int argc, char **argv)
 	// Window initialization
 	GLFWwindow *window;
 
-	if (!glfwInit()) return -1;
+	glfwSetErrorCallback([](const int error, const char* msg){
+		cout << "Error id : " << error << ", " << msg << endl;
+		exit(-1);
+	});
+
+	if (!glfwInit())
+	{
+		cout << "GLFW can't initialize" << endl;
+		return -1;
+	}
 
 	GLFWmonitor *monitor = glfwGetPrimaryMonitor();
 
@@ -66,8 +75,6 @@ int main(int argc, char **argv)
 
 	int width = mode->width;
 	int height = mode->height-30;
-	width = 800;
-	height = 600;
 	window = glfwCreateWindow(width, height, "N-Body Simulation", NULL, NULL);
 
 	glfwMakeContextCurrent(window);

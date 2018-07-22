@@ -1,6 +1,7 @@
 find_package(GLM REQUIRED)
 find_package(GLFW REQUIRED)
 find_package(GLEW)
+set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL)
 find_package(Vulkan)
 
@@ -32,7 +33,7 @@ if (GLEW_FOUND AND OPENGL_FOUND)
 		${GLEW_INCLUDE_DIR}
 		${OPENGL_INCLUDE_DIR})
 
-	target_link_libraries(nbodygl ${GLFW_LIBRARIES} ${GLEW_LIBRARY} ${OPENGL_gl_LIBRARY})
+	target_link_libraries(nbodygl ${GLFW_LIBRARIES} ${GLEW_LIBRARY} ${OPENGL_LIBRARY})
 endif()
 
 if (VULKAN_FOUND)

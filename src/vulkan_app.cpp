@@ -3,6 +3,8 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <limits>
+#include <cstring>
 
 /**
  * Returns whether vulkan supports the given layers
