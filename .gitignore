@@ -1,3 +1,6 @@
 build
 nbodygl
 nbodyvk
+.cache
+*~
+settings.json
