@@ -21,7 +21,10 @@ set(VULKAN_SOURCE
 
 project (nbody)
 
-if (GLEW_FOUND AND OPENGL_FOUND)
+set(BUILD_VULKAN OFF CACHE STRING "")
+set(BUILD_OPENGL ON CACHE STRING "")
+
+if (GLEW_FOUND AND OPENGL_FOUND AND BUILD_OPENGL)
 	add_executable(nbodygl ${COMMON_SOURCE} ${OPENGL_SOURCE})
 	target_compile_definitions(nbodygl PRIVATE -DUSE_OPENGL)
 
@@ -36,7 +39,7 @@ if (GLEW_FOUND AND OPENGL_FOUND)
 	target_link_libraries(nbodygl ${GLFW_LIBRARIES} ${GLEW_LIBRARY} ${OPENGL_LIBRARY})
 endif()
 
-if (VULKAN_FOUND)
+if (VULKAN_FOUND AND BUILD_VULKAN)
 	add_executable(nbodyvk ${COMMON_SOURCE} ${VULKAN_SOURCE})
 	set(COMPILE_DEFS -DUSE_VULKAN)
 
