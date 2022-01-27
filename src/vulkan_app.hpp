@@ -1,84 +1,74 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
-#include <vector>
-#include <string>
+#include <vulkan/vulkan.h>
+
 #include <iostream>
+#include <string>
+#include <vector>
 
 #define log(x) std::cout << (x) << std::endl
 
-struct QueueFamilies
-{
-	int32_t graphics;
-	int32_t present;
+struct QueueFamilies {
+   int32_t graphics;
+   int32_t present;
 
-	bool isValid() { return graphics >= 0 && present >= 0;}
+   bool isValid() { return graphics >= 0 && present >= 0; }
 };
 
-class VulkanApp
-{
-protected:
-	VkInstance instance;
-	VkDevice device;
-	VkPhysicalDevice physicalDevice;
-	QueueFamilies families;
-	VkCommandPool commandPool;
+class VulkanApp {
+  protected:
+   VkInstance instance;
+   VkDevice device;
+   VkPhysicalDevice physicalDevice;
+   QueueFamilies families;
+   VkCommandPool commandPool;
 
-	VkQueue graphicsQueue;
-	VkQueue presentQueue;
+   VkQueue graphicsQueue;
+   VkQueue presentQueue;
 
-	VkSurfaceKHR surface;
+   VkSurfaceKHR surface;
 
-	VkPhysicalDeviceProperties deviceProperties;
+   VkPhysicalDeviceProperties deviceProperties;
 
-	struct {
-		VkSwapchainKHR swapchain;
-		std::vector<VkImage> images;
-		std::vector<VkImageView> views;
-		std::vector<VkFramebuffer> framebuffers;
-		std::vector<VkCommandBuffer> commandBuffers;
-		std::vector<VkFence> fences;
-		VkExtent2D extent;
-		VkFormat format;
-		VkSemaphore imageAvailable;
-		VkSemaphore renderFinished;
-	} swapchain;
+   struct {
+      VkSwapchainKHR swapchain;
+      std::vector<VkImage> images;
+      std::vector<VkImageView> views;
+      std::vector<VkFramebuffer> framebuffers;
+      std::vector<VkCommandBuffer> commandBuffers;
+      std::vector<VkFence> fences;
+      VkExtent2D extent;
+      VkFormat format;
+      VkSemaphore imageAvailable;
+      VkSemaphore renderFinished;
+   } swapchain;
 
-	void createInstance(const std::string &appName);
-	void createSurface(GLFWwindow *window);
-	void createDevice();
-	void createSwapchain(int width, int height);
-	void createFramebuffers(VkRenderPass renderPass);
-	void createCommandPool();
+   void createInstance(const std::string &appName);
+   void createSurface(GLFWwindow *window);
+   void createDevice();
+   void createSwapchain(int width, int height);
+   void createFramebuffers(VkRenderPass renderPass);
+   void createCommandPool();
 
-	void createBuffer(
-		VkDeviceSize size,
-		VkBufferUsageFlags usage,
-		VkMemoryPropertyFlags properties,
-		VkBuffer &buffer,
-		VkDeviceMemory &memory);
+   void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
+                     VkMemoryPropertyFlags properties, VkBuffer &buffer,
+                     VkDeviceMemory &memory);
 
-	void createImage(
-		VkImageType imageType,
-		VkFormat format,
-		VkExtent3D extent,
-		uint32_t mipLevels,
-		uint32_t arrayLayers,
-		VkSampleCountFlagBits samples,
-		VkImageTiling tiling,
-		VkImageUsageFlags usage,
-		VkImageLayout layout,
-		VkMemoryPropertyFlags properties,
-		VkImage &image,
-		VkDeviceMemory &memory);
+   void createImage(VkImageType imageType, VkFormat format, VkExtent3D extent,
+                    uint32_t mipLevels, uint32_t arrayLayers,
+                    VkSampleCountFlagBits samples, VkImageTiling tiling,
+                    VkImageUsageFlags usage, VkImageLayout layout,
+                    VkMemoryPropertyFlags properties, VkImage &image,
+                    VkDeviceMemory &memory);
 
-	uint32_t acquireImage();
-	void present(uint32_t imageIndex);	
+   uint32_t acquireImage();
+   void present(uint32_t imageIndex);
 
-	VkShaderModule createShaderModule(const std::string &filename);
-	int32_t findProperties(VkMemoryPropertyFlags flags);
-	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+   VkShaderModule createShaderModule(const std::string &filename);
+   int32_t findProperties(VkMemoryPropertyFlags flags);
+   uint32_t findMemoryType(uint32_t typeFilter,
+                           VkMemoryPropertyFlags properties);
 
-	void destroy();
+   void destroy();
 };
