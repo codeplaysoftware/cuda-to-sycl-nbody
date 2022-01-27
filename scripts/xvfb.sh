@@ -1,3 +1,9 @@
+#!/bin/bash
+
+# Copyright (C) 2022 Codeplay Software Limited
+# This work is licensed under the terms of the MIT license.
+# For a copy, see https://opensource.org/licenses/MIT.
+
 # Get rid of any previous virtual frame buffer
 pkill -9 Xvfb
 rm /var/tmp/Xvfb_screen_0

@@ -1,3 +1,6 @@
+// Copyright (C) 2016 - 2018 Sarah Le Luron
+// Copyright (C) 2022 Codeplay Software Limited
+
 #pragma once
 
 #ifdef USE_OPENGL

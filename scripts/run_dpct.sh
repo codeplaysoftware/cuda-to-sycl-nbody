@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Copyright (C) 2022 Codeplay Software Limited
+# This work is licensed under the terms of the MIT license.
+# For a copy, see https://opensource.org/licenses/MIT.
+
 # This script converts the project's CUDA code to SYCL code. The DPC++ compatibility tool offers options
 # for intercepting complex builds, but current dev environment restrictions require me to run dpct inside
 # a docker container. This complicates things, so for now I'm just doing single source conversion on the 

@@ -1,3 +1,4 @@
+# Copyright (C) 2016 - 2018 Sarah Le Luron
 /usr/bin/glslangValidator -V main.vert -o main_vert.spv
 /usr/bin/glslangValidator -V main.geom -o main_geom.spv
 /usr/bin/glslangValidator -V main.frag -o main_frag.spv

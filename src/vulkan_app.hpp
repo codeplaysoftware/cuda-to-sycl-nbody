@@ -1,3 +1,5 @@
+// Copyright (C) 2016 - 2018 Sarah Le Luron
+
 #pragma once
 
 #include <GLFW/glfw3.h>
