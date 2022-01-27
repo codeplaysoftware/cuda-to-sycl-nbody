@@ -1,34 +1,56 @@
 # nbody
-OpenGL 4.5 N-body simulation - with pretty graphics.
+CUDA N-body sim with OpenGL graphics & automatically CUDA->SYCL conversion using [dpct](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compatibility-tool.html)
 
 ![](http://i.imgur.com/drzi33P.jpg)
 
-Started off as a little compute shader exercise to warm me up, went on because I can't finish anything.
-
-[GPU Gems](http://http.developer.nvidia.com/GPUGems3/gpugems3_ch31.html) was of great help
-
-Graphics inspired by [AndreasReiten's qtvknbody](https://github.com/AndreasReiten/qtvknbody/)
+Forked from https://github.com/salel/nbody
 
 ## Building
-CMake, GLM, GLFW and GLEW are required.
 
-    mkdir -p build
-    cd build
-    cmake ..
-    make
+Build scripts for both versions (CUDA & SYCL) are located in `./scripts/`
 
+Dependencies:
+ - cmake
+ - GLM
+ - GLFW
+ - GLEW
+
+With apt:
+```
+sudo apt update
+sudo apt install libglew-dev libglfw3-dev libglm-dev libxxf86vm-dev libxcursor-dev libxinerama-dev libxi-dev
+```
 Remember that you need an OpenGL 4.5 ready graphics card. Radeon 7xxx or Geforce GTX 4xx. No OSX. Maybe Intel.
+
+
+### Converting CUDA to SYCL
+
+The script ./scripts/run_dpct.sh calls a containerized version of the DPC++ Compatibility Tool to automatically convert the CUDA components of this project into SYCL. A docker container was used because the dev machine has an incompatible version of the CUDA driver. This should be adapted based on your environment. 
+
+The DPC++ compatibility tool offers options for intercepting complex builds, but current dev environment restrictions require me to run dpct inside a docker container. This complicates things, so for now I'm just doing single source conversion on the simulator.cu file.
+
+### CMake
+
+The option `-DBUILD_SYCL` switches between building the CUDA version & the SYCL version of the code.
+
+## Passing data between OpenGL & CUDA/SYCL
+
+OpenGL & CUDA are capable of interoperating to share device memory, but this will not play well with the DPC++ Compatibility Tool. Instead, computed particle positions are migrated back to the host by CUDA/SYCL, then sent *back* to OpenGL via mapping.
 
 ## Pipeline
 
 ### Simulation
-Two buffers are created to hold the position and velocity data of particles. 'Random' data is fed into these buffers for initialization, in the shape of a thick disk.
+The `DiskGalaxySimulator` class handles the physics of n-body interaction. The computation of interparticle forces, velocity & updated particle positions are handled by the CUDA kernel `particle_interaction`.
 
-There are two steps to compute the N-body simulation:
-#### Interaction
-This compute shader runs for each particle and computes the gravitational contribution of all other particles. An epsilon value is chosen so particles don't fly away at lightspeed, some damping is applied to grossly approximate interstellar medium. Chunks of particles are loaded into shared memory to make it work like a handcrafted cache and boost the performance. This pass only updates the particles' velocities.
-#### Integration
-From the new velocities, the particles' positions are computed. That's all. This is done as a separate step because it guarantees some kind of double buffering between positions and velocities.
+The equation solved by this code is equivalent to Eq. 1 [here](http://www.scholarpedia.org/article/N-body_simulations_(gravitational)), with the simplifying assumption that all particles have unit mass and there is no external/background force.
+
+---
+
+**TODO**
+
+Add equations here & link force to velocity, velocity to particle position. Describe timestepping & damping.
+
+---
 
 ### Rendering
 Render targets for all passes except the last use dimensions a bit larger than the window, to prevent popping. This is used when some effects affect neighboring pixels (bloom, ssao..) and must be taken into account even when off-screen.
@@ -44,5 +66,8 @@ The average luminance of the scene is computed from the HDR target into a downsc
 #### Tonemapping & gamma correction
 The exposure of the final render is obtained from the average luminance, and the HDR and Bloom targets are combined and converted to LDR. Gamma correction is also applied. Tada.
 
+## Running headless
 
+If you `nbodygl` on a remote machine with X-forwarding, sending the rendered frames across the net will be a significant bottleneck. This can be worked around by making use of [Xvfb](https://linux.die.net/man/1/xvfb) which provides a *virtual* X display. You can then read from the memory mapped file to write to e.g. MP4 output. 
 
+The script `./scripts/xvfb.sh` runs `nbodygl` in this manner, producing a video file `output.mp4`. Note that this script will run the simulation until manually terminated.

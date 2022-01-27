@@ -12,7 +12,7 @@ set(COMMON_SOURCE
 	camera.cpp 
 	sim_param.cpp 
 	gen.cpp 
-	simulator.cu)
+	simulator.dp.cpp)
 
 set(OPENGL_SOURCE 
 	renderer_gl.cpp 
@@ -26,6 +26,8 @@ set(VULKAN_SOURCE
 set(BUILD_VULKAN OFF CACHE STRING "")
 set(BUILD_OPENGL ON CACHE STRING "")
 
+# TODO set cuda_include_directories()
+
 if (GLEW_FOUND AND OPENGL_FOUND AND BUILD_OPENGL)
 	add_executable(nbodygl ${COMMON_SOURCE} ${OPENGL_SOURCE})
 	target_compile_definitions(nbodygl PRIVATE -DUSE_OPENGL)
@@ -37,12 +39,14 @@ if (GLEW_FOUND AND OPENGL_FOUND AND BUILD_OPENGL)
 		${GLFW_INCLUDE_DIR}
 		${GLEW_INCLUDE_DIR}
 		${OPENGL_INCLUDE_DIR}
-                ${CUDA_INCLUDE_DIRS})
+                ${CUDA_INCLUDE_DIRS}
+                ${CMAKE_CURRENT_SOURCE_DIR}/include
+		/opt/intel/oneapi/mkl/2022.0.1/include/
+		)
 
 	target_link_libraries(nbodygl ${GLFW_LIBRARIES} ${GLEW_LIBRARY} ${OPENGL_LIBRARY})
 endif()
 
-# TODO - rip out vulkan stuff, it's not maintained
 if (VULKAN_FOUND AND BUILD_VULKAN)
 	add_executable(nbodyvk ${COMMON_SOURCE} ${VULKAN_SOURCE})
 	set(COMPILE_DEFS -DUSE_VULKAN)

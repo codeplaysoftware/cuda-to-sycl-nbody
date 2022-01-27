@@ -1,6 +1,9 @@
-build
+build*
 nbodygl
 nbodyvk
 .cache
 *~
 settings.json
+**/dpct-output/
+\#*
+*mp4
