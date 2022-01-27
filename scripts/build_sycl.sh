@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Copyright (C) 2022 Codeplay Software Limited
+# This work is licensed under the terms of the MIT license.
+# For a copy, see https://opensource.org/licenses/MIT.
+
 BUILD_DIR="build_sycl"
 
 rm -rf $BUILD_DIR

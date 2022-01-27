@@ -1,3 +1,7 @@
+# Copyright (C) 2022 Codeplay Software Limited
+# This work is licensed under the terms of the MIT license.
+# For a copy, see https://opensource.org/licenses/MIT.
+
 # non-functional code! This is a sketch of how to do the dpct conversion properly in a container
 #
 # Should be run with something like:

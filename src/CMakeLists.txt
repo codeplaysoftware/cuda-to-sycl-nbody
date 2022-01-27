@@ -1,3 +1,6 @@
+# Copyright (C) 2016 - 2018 Sarah Le Luron
+# Copyright (C) 2022 Codeplay Software Limited
+
 find_package(GLM REQUIRED)
 find_package(GLFW REQUIRED)
 find_package(GLEW)

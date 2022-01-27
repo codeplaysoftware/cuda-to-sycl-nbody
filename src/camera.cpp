@@ -1,3 +1,5 @@
+// Copyright (C) 2016 - 2018 Sarah Le Luron
+
 #include "camera.hpp"
 
 #include <algorithm>

@@ -1,3 +1,4 @@
+# Copyright (C) 2016 - 2018 Sarah Le Luron
 #version 450 core
 
 in vec2 bary;

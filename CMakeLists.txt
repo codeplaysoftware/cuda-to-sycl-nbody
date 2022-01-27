@@ -1,3 +1,6 @@
+# Copyright (C) 2016 - 2018 Sarah Le Luron
+# Copyright (C) 2022 Codeplay Software Limited
+
 cmake_minimum_required (VERSION 3.16)
 
 project (nbody LANGUAGES CXX CUDA)
