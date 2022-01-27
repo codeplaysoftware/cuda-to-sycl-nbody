@@ -1,4 +1,4 @@
-# Copyright (C) 2016 - 2018 Sarah Le Luron
+// Copyright (C) 2016 - 2018 Sarah Le Luron
 #version 450 core
 
 layout (binding = 0) uniform sampler2D tex;

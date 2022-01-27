@@ -1,4 +1,4 @@
-# Copyright (C) 2016 - 2018 Sarah Le Luron
+// Copyright (C) 2016 - 2018 Sarah Le Luron
 #version 450 core
 #extension GL_ARB_separate_shader_objects : enable
 
