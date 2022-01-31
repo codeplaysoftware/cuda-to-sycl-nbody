@@ -9,5 +9,7 @@ add_library(imgui STATIC
 
 target_include_directories(imgui PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 
+target_include_directories(nbodygl PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
+
 # Link main project to imgui lib
 target_link_libraries(nbodygl PRIVATE imgui)
