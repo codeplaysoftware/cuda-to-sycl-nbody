@@ -22,7 +22,7 @@ class RendererGL : public Renderer {
    void initImgui(GLFWwindow *window);
    void updateParticles();
    void render(glm::mat4 proj_mat, glm::mat4 view_mat);
-   void printFPS(float fpsVal);
+   void printKernelTime(float kernelTime);
    RendererGL() : sim{} {}
 
   private:

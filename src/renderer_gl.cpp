@@ -15,6 +15,8 @@
 
 const int FBO_MARGIN = 50;
 
+#define PRINT_PSEUDO_FPS 0
+
 using namespace std;
 
 void RendererGL::initWindow() {
@@ -124,7 +126,7 @@ void RendererGL::initImgui(GLFWwindow *window) {
    ImGui_ImplOpenGL3_Init("#version 450");
 }
 
-void RendererGL::printFPS(float fpsVal) {
+void RendererGL::printKernelTime(float kernelTime) {
    // Start the Dear ImGui frame
    ImGui_ImplOpenGL3_NewFrame();
    ImGui_ImplGlfw_NewFrame();
@@ -138,7 +140,11 @@ void RendererGL::printFPS(float fpsVal) {
                     ImGuiWindowFlags_NoSavedSettings |
                     ImGuiWindowFlags_NoInputs);
    ImGui::SetWindowFontScale(1.8);
-   ImGui::Text("FPS: %2.0f", fpsVal);
+   if (PRINT_PSEUDO_FPS) {
+      ImGui::Text("FPS: %2.0f", 1000.0/kernelTime);
+   } else {
+      ImGui::Text("Kernel time: %4.2f ms", kernelTime);
+   }
    ImGui::End();
 
    ImGui::Render();

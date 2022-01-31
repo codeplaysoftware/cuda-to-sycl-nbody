@@ -86,20 +86,17 @@ int main(int argc, char **argv) {
 
    Camera camera;
 
-   double last_fps{0};
+   float last_fps{0};
 
    // Main loop
    while (!glfwWindowShouldClose(window) &&
           glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_RELEASE) {
       double frame_start = glfwGetTime();
 
-      std::cout << "Updating simulation" << std::endl;
       nbodySim.stepSim();
-      std::cout << "Updating particle pos" << std::endl;
       renderer.updateParticles();
-      std::cout << "Rendering" << std::endl;
       renderer.render(camera.getProj(width, height), camera.getView());
-      renderer.printFPS(last_fps);
+      renderer.printKernelTime(nbodySim.getLastStepTime());
 
       // Window refresh
       glfwSwapBuffers(window);
@@ -109,8 +106,6 @@ int main(int argc, char **argv) {
       double frame_end = glfwGetTime();
       double elapsed = frame_end - frame_start;
       last_fps = 1.0 / elapsed;
-
-      std::cout << "FPS: " << last_fps << "\nElapsed: " << elapsed << "\n";
    }
    renderer.destroy();
    glfwDestroyWindow(window);

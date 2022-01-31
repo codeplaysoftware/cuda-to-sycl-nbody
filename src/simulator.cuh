@@ -109,6 +109,7 @@ namespace simulation {
       virtual size_t getNumParticles() = 0;
       virtual const ParticleData &getParticlePos() = 0;
       virtual const ParticleData &getParticleVel() = 0;
+      virtual float getLastStepTime() = 0;
    };
 
    /*
@@ -128,12 +129,14 @@ namespace simulation {
       DiskGalaxySimulator(SimParam params_);
 
       void stepSim();
+      float getLastStepTime() { return lastStepTime; }
       size_t getNumParticles() { return params.numParticles; }
       const ParticleData &getParticlePos();
       const ParticleData &getParticleVel();
 
      private:
       SimParam params;
+      float lastStepTime{0.0};
 
       // Data for particle positions & vel on host
       ParticleData pos;
