@@ -7,3 +7,5 @@ settings.json
 **/dpct-output/
 \#*
 *mp4
+lib/**cpp
+lib/**h
