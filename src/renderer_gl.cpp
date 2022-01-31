@@ -133,13 +133,12 @@ void RendererGL::printFPS(float fpsVal) {
    // Generate a minimal window
    bool isOpen;
    ImGui::Begin("N/A", &isOpen,
-                ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-                    ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
+                    ImGuiWindowFlags_NoScrollbar |
                     ImGuiWindowFlags_NoSavedSettings |
                     ImGuiWindowFlags_NoInputs);
    ImGui::SetWindowFontScale(1.8);
-   ImGui::SetWindowSize(ImVec2(120.0, 15.0)); // TODO this isn't portable
-   ImGui::Text("FPS: %.2f", fpsVal);
+   ImGui::Text("FPS: %2.0f", fpsVal);
    ImGui::End();
 
    ImGui::Render();
