@@ -87,6 +87,7 @@ int main(int argc, char **argv) {
    glfwSetScrollCallback(window, scroll_callback);
 
    renderer.init(window, width, height, nbodySim);
+   renderer.initImgui(window);
 
    // Get initial postitions generated in simulator ctor
    renderer.updateParticles();
@@ -162,6 +163,7 @@ int main(int argc, char **argv) {
       renderer.updateParticles();
       std::cout << "Rendering" << std::endl;
       renderer.render(camera.getProj(width, height), camera.getView());
+      renderer.printFPS(last_fps);
 
       // Window refresh
       glfwSwapBuffers(window);

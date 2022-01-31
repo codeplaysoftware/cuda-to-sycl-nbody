@@ -8,6 +8,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <stdexcept>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 #include "gen.hpp"
 
 const int FBO_MARGIN = 50;
@@ -106,6 +109,41 @@ void RendererGL::createVaosVbos() {
 void RendererGL::updateParticles() {
    setParticleData(vboParticlesPos, sim->getParticlePos());
    setParticleData(ssboVelocities, sim->getParticleVel());
+}
+
+void RendererGL::initImgui(GLFWwindow *window) {
+   // Setup ImGui context
+   IMGUI_CHECKVERSION();
+   ImGui::CreateContext();
+   ImGuiIO &io = ImGui::GetIO();
+   (void)io;
+   ImGui::StyleColorsDark();
+
+   // Setup Platform/Renderer bindings
+   ImGui_ImplGlfw_InitForOpenGL(window, true);
+   ImGui_ImplOpenGL3_Init("#version 450");
+}
+
+void RendererGL::printFPS(float fpsVal) {
+   // Start the Dear ImGui frame
+   ImGui_ImplOpenGL3_NewFrame();
+   ImGui_ImplGlfw_NewFrame();
+   ImGui::NewFrame();
+
+   // Generate a minimal window
+   bool isOpen;
+   ImGui::Begin("N/A", &isOpen,
+                ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                    ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                    ImGuiWindowFlags_NoSavedSettings |
+                    ImGuiWindowFlags_NoInputs);
+   ImGui::SetWindowFontScale(1.8);
+   ImGui::SetWindowSize(ImVec2(120.0, 15.0)); // TODO this isn't portable
+   ImGui::Text("FPS: %.2f", fpsVal);
+   ImGui::End();
+
+   ImGui::Render();
+   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 void RendererGL::setParticleData(const GLuint buffer,
