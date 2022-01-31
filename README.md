@@ -71,3 +71,7 @@ The exposure of the final render is obtained from the average luminance, and the
 If you `nbodygl` on a remote machine with X-forwarding, sending the rendered frames across the net will be a significant bottleneck. This can be worked around by making use of [Xvfb](https://linux.die.net/man/1/xvfb) which provides a *virtual* X display. You can then read from the memory mapped file to write to e.g. MP4 output. 
 
 The script `./scripts/xvfb.sh` runs `nbodygl` in this manner, producing a video file `output.mp4`. Note that this script will run the simulation until manually terminated.
+
+## SYCL vs. CUDA performance
+
+This actually runs faster on SYCL after `dpct` than it does on CUDA. For 4 steps of the physical simulation (1 rendered frame), CUDA takes ~8.14ms whereas SYCL takes ~5.51ms (RTX 3060).
