@@ -15,3 +15,4 @@ else()
         add_subdirectory(src)
 endif()
 
+add_subdirectory(libs/imgui)
