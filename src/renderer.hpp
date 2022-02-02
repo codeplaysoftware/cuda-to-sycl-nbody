@@ -3,13 +3,7 @@
 
 #pragma once
 
-#ifdef USE_OPENGL
 #include <GL/glew.h>
-#else
-#ifdef USE_VULKAN
-#include <vulkan/vulkan.h>
-#endif
-#endif
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
