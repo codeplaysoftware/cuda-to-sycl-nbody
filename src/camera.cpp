@@ -13,12 +13,10 @@ Camera::Camera() {
    position.x = 0;
    position.y = PI / 4;
    position.z = 50.0;
-   velocity.x = 0.0;
-   velocity.y = 0.0;
-   velocity.z = 0.0;
-   look_at.x = 0.0;
-   look_at.y = 0.0;
-   look_at.z = 0.0;
+
+   velocity    = {0.0, 0.0, 0.0};
+   look_at     = {0.0, 0.0, 0.0};
+   look_at_vel = {0.0, 0.0, 0.0};
 }
 
 void Camera::step() {
