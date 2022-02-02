@@ -47,6 +47,11 @@ The equation solved by this code is equivalent to Eq. 1 [here](http://www.schola
 ---
 
 <img src="https://render.githubusercontent.com/render/math?math=\vec{F}_i=-\sum_{i\neq j} G \frac{(\vec{r}_i - \vec{r}_j)}{{\lvert \vec{r}_i - \vec{r}_j \rvert }^3}">
+![eq1](https://render.githubusercontent.com/render/math?math=\vec{F}_i=-\sum_{i\neq j} G \frac{(\vec{r}_i - \vec{r}_j)}{{\lvert \vec{r}_i - \vec{r}_j \rvert }^3}#gh-light-mode-only)
+![eq1](https://render.githubusercontent.com/render/math?math=\vec{F}_i=-\sum_{i\neq j} G \frac{(\vec{r}_i - \vec{r}_j)}{{\lvert \vec{r}_i - \vec{r}_j \rvert }^3}#gh-dark-mode-only)
+
+![GitHub Light](https://github.com/github-light.png#gh-dark-mode-only)
+
 **TODO**
 
 Add equations here & link force to velocity, velocity to particle position. Describe timestepping & damping.
