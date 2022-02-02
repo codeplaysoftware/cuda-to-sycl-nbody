@@ -23,4 +23,14 @@ void SimParam::parseArgs(int argc, char **argv) {
 
    // Third argument if existing = damping parameter
    if (argc >= 4) damping = atof(argv[3]);
+
+   // Fourth argument if existing = dt (timestep size) parameter
+   if (argc >= 5) dt = atof(argv[4]);
+
+   // Fifth argument if existing = distEps (minimum inter-particle distance) parameter
+   if (argc >= 6) distEps = atof(argv[5]);
+
+   // Sixth argument if existing = G (gravity) parameter
+   if (argc >= 7) G = atof(argv[6]);
+
 }
