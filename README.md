@@ -37,20 +37,28 @@ The option `-DBUILD_SYCL` switches between building the CUDA version & the SYCL 
 
 OpenGL & CUDA are capable of interoperating to share device memory, but this will not play well with the DPC++ Compatibility Tool. Instead, computed particle positions are migrated back to the host by CUDA/SYCL, then sent *back* to OpenGL via mapping.
 
-## Pipeline
 
-### Simulation
+## Simulation
+
 The `DiskGalaxySimulator` class handles the physics of n-body interaction. The computation of interparticle forces, velocity & updated particle positions are handled by the CUDA kernel `particle_interaction`.
 
-The equation solved by this code is equivalent to Eq. 1 [here](http://www.scholarpedia.org/article/N-body_simulations_(gravitational)), with the simplifying assumption that all particles have unit mass and there is no external/background force.
+The equation solved by this code is equivalent to Eq. 1 [here](http://www.scholarpedia.org/article/N-body_simulations_(gravitational)), with the simplifying assumption that all particles have unit mass and there is no external/background force. This becomes:
 
----
+![Eq1](/docs/Eq1.png)
 
-**TODO**
+The force vector on each particle (F) is the sum of gravitational forces from all other particles. For each particle interaction, the attractive force is inversely proportional to the square distance between them. This force is equal to the gravitational constant (`G`) multiplied by the unit vector pointing between the particles, divided by the square of this distance. The equation above has this last term slightly rearranged to avoid unnecessary computation.
 
-Add equations here & link force to velocity, velocity to particle position. Describe timestepping & damping.
+Given the assumption of unit mass, the force (F) is equal to the acceleration, and so at each timestep, the force vector F is simpy added to the velocity vector. The position of each particle is updated by the velocity multiplied by the timestep size (`dt`).
 
----
+A drag factor (`damping`) is used to regulate the velocity. At each timestep, the velocity is multiplied by the drag term, slowing the particles. The maximum force between very close particles is also limited for stability; this is achieved via an epsilon term (`distEps`) which is added to the distance between each particle pairing.
+
+The `parameters` described in this section can all be adjusted via command line arguments, as follows:
+
+`./nbodygl numParticles maxIterationsPerFrame damping dt distEps G`
+
+Note that `numParicles` specifies the number of particles simulated, divided by blocksize (i.e. setting `numParticles` to 50 produces 50*256 particles). `maxIterationsPerFrame` specifies how many steps of the simulation to take before rendering the next frame. For default values for all of these parameters, refer to `sim_param.cpp`.
+
+## Graphics Pipeline
 
 ### Rendering
 Render targets for all passes except the last use dimensions a bit larger than the window, to prevent popping. This is used when some effects affect neighboring pixels (bloom, ssao..) and must be taken into account even when off-screen.
