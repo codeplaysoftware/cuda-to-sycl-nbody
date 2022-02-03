@@ -42,7 +42,7 @@ if (GLEW_FOUND AND OPENGL_FOUND AND BUILD_OPENGL)
 		${OPENGL_INCLUDE_DIR}
                 ${CUDA_INCLUDE_DIRS})
 
-	target_link_libraries(nbodygl ${GLFW_LIBRARIES} ${GLEW_LIBRARY} ${OPENGL_LIBRARY})
+	target_link_libraries(nbodygl PRIVATE ${GLFW_LIBRARIES} ${GLEW_LIBRARY} ${OPENGL_LIBRARY})
 endif()
 
 # TODO - rip out vulkan stuff, it's not maintained
@@ -64,5 +64,5 @@ if (VULKAN_FOUND AND BUILD_VULKAN)
 		${GLFW_INCLUDE_DIR}
 		${VULKAN_INCLUDE_DIR})
 
-	target_link_libraries(nbodyvk ${GLFW_LIBRARIES} ${VULKAN_LIBRARY})
+	target_link_libraries(nbodyvk PRIVATE ${GLFW_LIBRARIES} ${VULKAN_LIBRARY})
 endif()

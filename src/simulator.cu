@@ -11,6 +11,7 @@
 #include <cmath>
 #include <random>
 #include <tuple>
+#include <chrono>
 
 namespace simulation {
 
@@ -36,11 +37,21 @@ namespace simulation {
       constexpr int wg_size = 256;
       int nblocks = ((getNumParticles() - 1) / wg_size) + 1;
 
+      // Profiling info - rather than using the CUDA event recording
+      // approach, we are instead measuring the time from before kernel
+      // submission until host synchronization. This is more portable via
+      // dpct.
+      auto start = std::chrono::steady_clock::now();
       for (size_t i = 0; i < params.maxIterationsPerFrame; i++) {
          particle_interaction<<<nblocks, wg_size>>>(pos_d, pos_next_d, vel_d,
                                                     params);
          std::swap(pos_d, pos_next_d);
       }
+      gpuErrchk(cudaDeviceSynchronize());
+      auto stop = std::chrono::steady_clock::now();
+      lastStepTime =
+             std::chrono::duration<float, std::milli>(stop - start)
+                 .count();
 
       // Sync data
       recvFromDevice();
