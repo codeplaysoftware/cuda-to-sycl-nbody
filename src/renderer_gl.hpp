@@ -18,8 +18,11 @@ class RendererGL : public Renderer {
    void init(GLFWwindow *window, int width, int height,
              simulation::Simulator &sim);
    void destroy();
+   /// Initialize Imgui
+   void initImgui(GLFWwindow *window);
    void updateParticles();
    void render(glm::mat4 proj_mat, glm::mat4 view_mat);
+   void printKernelTime(float kernelTime);
    RendererGL() : sim{} {}
 
   private:

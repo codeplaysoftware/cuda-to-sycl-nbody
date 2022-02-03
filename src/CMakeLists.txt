@@ -33,4 +33,4 @@ target_include_directories(nbodygl PRIVATE
 	${OPENGL_INCLUDE_DIR}
     ${CUDA_INCLUDE_DIRS})
 
-target_link_libraries(nbodygl ${GLFW_LIBRARIES} ${GLEW_LIBRARY} ${OPENGL_LIBRARY})
+target_link_libraries(nbodygl PRIVATE ${GLFW_LIBRARIES} ${GLEW_LIBRARY} ${OPENGL_LIBRARY})

@@ -33,4 +33,4 @@ target_include_directories(nbodygl PRIVATE
 	/opt/intel/oneapi/mkl/2022.0.1/include/
 	)
 
-target_link_libraries(nbodygl ${GLFW_LIBRARIES} ${GLEW_LIBRARY} ${OPENGL_LIBRARY})
+target_link_libraries(nbodygl PRIVATE ${GLFW_LIBRARIES} ${GLEW_LIBRARY} ${OPENGL_LIBRARY})

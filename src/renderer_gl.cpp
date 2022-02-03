@@ -8,9 +8,14 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <stdexcept>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 #include "gen.hpp"
 
 const int FBO_MARGIN = 50;
+
+#define PRINT_PSEUDO_FPS 0
 
 using namespace std;
 
@@ -104,6 +109,44 @@ void RendererGL::createVaosVbos() {
 void RendererGL::updateParticles() {
    setParticleData(vboParticlesPos, sim->getParticlePos());
    setParticleData(ssboVelocities, sim->getParticleVel());
+}
+
+void RendererGL::initImgui(GLFWwindow *window) {
+   // Setup ImGui context
+   IMGUI_CHECKVERSION();
+   ImGui::CreateContext();
+   ImGuiIO &io = ImGui::GetIO();
+   (void)io;
+   ImGui::StyleColorsDark();
+
+   // Setup Platform/Renderer bindings
+   ImGui_ImplGlfw_InitForOpenGL(window, true);
+   ImGui_ImplOpenGL3_Init("#version 450");
+}
+
+void RendererGL::printKernelTime(float kernelTime) {
+   // Start the Dear ImGui frame
+   ImGui_ImplOpenGL3_NewFrame();
+   ImGui_ImplGlfw_NewFrame();
+   ImGui::NewFrame();
+
+   // Generate a minimal window
+   bool isOpen;
+   ImGui::Begin("N/A", &isOpen,
+                ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
+                    ImGuiWindowFlags_NoScrollbar |
+                    ImGuiWindowFlags_NoSavedSettings |
+                    ImGuiWindowFlags_NoInputs);
+   ImGui::SetWindowFontScale(1.8);
+   if (PRINT_PSEUDO_FPS) {
+      ImGui::Text("FPS: %2.0f", 1000.0/kernelTime);
+   } else {
+      ImGui::Text("Kernel time: %4.2f ms", kernelTime);
+   }
+   ImGui::End();
+
+   ImGui::Render();
+   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 void RendererGL::setParticleData(const GLuint buffer,
