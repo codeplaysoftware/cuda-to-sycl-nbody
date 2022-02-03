@@ -146,7 +146,7 @@ namespace simulation {
 
    // Linear Algebra functions (not yet exposed in header)
    HOSTDEV vec3 cross(const vec3 v0, const vec3 v1) {
-      return vec3(v0.y * v1.z - v0.z * v1.y, v0.x * v1.z - v0.z * v1.x,
+      return vec3(v0.y * v1.z - v0.z * v1.y, v0.z * v1.x - v0.x * v1.z,
                   v0.x * v1.y - v0.y * v1.x);
    };
 
