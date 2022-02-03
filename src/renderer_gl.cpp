@@ -25,7 +25,6 @@ void RendererGL::initWindow() {
    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 }
 
-// TODO - why isn't this a ctor?
 void RendererGL::init(GLFWwindow *window, int width, int height,
                       simulation::Simulator &sim_) {
    // OpenGL initialization
@@ -94,12 +93,11 @@ void RendererGL::createVaosVbos() {
    glm::vec2 tri[3] = {glm::vec2(-2, -1), glm::vec2(+2, -1), glm::vec2(0, 4)};
    glNamedBufferStorage(vboDeferred, 3 * sizeof(glm::vec2), tri, 0);
 
-   // TODO - is GL_MAP_READ_BIT required here?
    // SSBO allocation (particle position & velocities)
    glNamedBufferStorage(vboParticlesPos, numParticles * sizeof(glm::vec4),
-                        nullptr, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
+                        nullptr, GL_MAP_WRITE_BIT);
    glNamedBufferStorage(ssboVelocities, numParticles * sizeof(glm::vec4),
-                        nullptr, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
+                        nullptr, GL_MAP_WRITE_BIT);
 
    // SSBO binding
    glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, vboParticlesPos, 0,
@@ -162,8 +160,6 @@ void RendererGL::setParticleData(const GLuint buffer,
    const ParticleData &particles = sim->getParticlePos();
 
    // Fill using placement new
-   // TODO - can't set alpha channel - new vector member in ParticleData?
-   // Optional arg?
    for (size_t i = 0; i < numParticles; i++) {
       glm::vec4 *my4 = new ((glm::vec4 *)particle_ptr + i)
           glm::vec4(data.x[i], data.y[i], data.z[i], 1.0f);

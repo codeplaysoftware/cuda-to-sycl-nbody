@@ -3,17 +3,9 @@
  
 #include <iostream>
 
-#ifdef USE_OPENGL
 #include <GL/glew.h>
 
 #include "renderer_gl.hpp"
-#else
-#ifdef USE_VULKAN
-#include <vulkan/vulkan.h>
-
-#include "renderer_vk.hpp"
-#endif
-#endif
 #include <GLFW/glfw3.h>
 
 #include <chrono>
@@ -62,13 +54,7 @@ int main(int argc, char **argv) {
    glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-#ifdef USE_OPENGL
    RendererGL renderer;
-#else
-#ifdef USE_VULKAN
-   RendererVk renderer;
-#endif
-#endif
 
    renderer.initWindow();
 
