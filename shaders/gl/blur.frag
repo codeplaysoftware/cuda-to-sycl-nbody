@@ -5,6 +5,10 @@ layout (binding = 0) uniform sampler2D tex;
 
 layout (location = 0) uniform vec2 size;
 layout (location = 1) uniform vec2 mult;
+layout (location = 2) uniform int kHalfWidth;
+// Maximum length of gauss kernel sample = 100
+layout (location = 3) uniform float[100] offset;
+layout (location = 103) uniform float[100] weight;
 
 in vec2 pass_tc;
 
@@ -19,7 +23,8 @@ vec4 contribute(float offset, float weight)
 
 void main()
 {
-  out_color = texture(tex, pass_tc) * 0.22702703;
-  out_color += contribute(1.38461538, 0.31621622);
-  out_color += contribute(3.23076923, 0.07027027);
+  out_color = texture(tex, pass_tc) * weight[0];
+  for(int i = 1; i < kHalfWidth; i++){
+    out_color += contribute(offset[i], weight[i]);
+  }
 }
