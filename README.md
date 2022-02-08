@@ -1,5 +1,5 @@
 # nbody
-CUDA N-body sim with OpenGL graphics & automatically CUDA->SYCL conversion using [dpct](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compatibility-tool.html)
+CUDA N-body sim with OpenGL graphics & automatically CUDA->SYCL conversion using [dpct](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compatibility-tool.html).
 
 ![](http://i.imgur.com/drzi33P.jpg)
 
@@ -58,6 +58,18 @@ The `parameters` described in this section can all be adjusted via command line 
 
 Note that `numParicles` specifies the number of particles simulated, divided by blocksize (i.e. setting `numParticles` to 50 produces 50*256 particles). `simIterationsPerFrame` specifies how many steps of the simulation to take before rendering the next frame. For default values for all of these parameters, refer to `sim_param.cpp`.
 
+### Modifying Simulation Behaviour
+
+You can get quite a wide range of 'galactic' behaviours by playing with the parameters described above.
+
+Initial velocity of stars is a stable orbital velocity, computed with an implicit value for gravity of `G = 1`. The default value *during* the simulation, however, is `G = 2`. So by default the galaxy collapses inwards quite quickly, but by reducing G closer to 1, you can make a more stable, rotating galaxy.
+
+The `damping` factor is a drag term. By default `damping = 0.999998` but by reducing this value to e.g. `0.999`, stars will tend to form local clusters before collapsing in towards the galactic centre.
+
+`distEps` serves as a stabilising parameter to prevent numerical instability at larger timestep sizes. Setting this value very small (`1.0e-10`) will produce more 'explosive' simulations. This is unrealistic for n-body gravitational interaction, but it looks dramatic.
+
+If you want to speed up the evolution of the galaxy, set a larger timestep size (`dt`) or increase the number of steps taken per frame (`simIterationsPerFrame`). Either change will increase the total simulation time per rendered frame. If you reach a sufficiently high timestep size that you get unstable explosive behaviour, increase the value of `distEps` and this should stabilise things. Note that there is a separate discussion [below](#performance-scaling-for-demos) about altering the ratio of compute/render time to, for instance, visually highlight a performance difference between platforms.
+
 ## Graphics Pipeline
 
 ### Rendering
@@ -82,6 +94,16 @@ The exposure of the final render is obtained from the average luminance, and the
 If you `nbodygl` on a remote machine with X-forwarding, sending the rendered frames across the net will be a significant bottleneck. This can be worked around by making use of [Xvfb](https://linux.die.net/man/1/xvfb) which provides a *virtual* X display. You can then read from the memory mapped file to write to e.g. MP4 output. 
 
 The script `./scripts/xvfb.sh` runs `nbodygl` in this manner, producing a video file `output.mp4`. Note that this script will run the simulation until manually terminated.
+
+## Performance Scaling for Demos
+
+We've previously discussed the desire for a simulation which is *visibly* slower when the physics kernel isn't well optimized. With current default settings, the rendering takes longer (~55ms) than the simulation (10ms). However, altering three of the simulation parameters provides almost complete control of the ratio of render to simulation time.
+
+Firstly, the number of particles (`numParticles` [above](#Simulation)) has a large effect on the simulation time, as the computation scales with O(n<sup>2</sup>). By default, 12.8k particles (50 * 256) are rendered, but increasing this to 64k particles (250 * 256), the simulation time increases from 10ms to ~170ms.
+
+Alternatively, simulation time can be arbitrarily raised or lowered by changing both timestep size (`dt` [above](#Simulation)) and simultion steps per rendered frame (`simIterationsPerFrame`, [above](#Simulation)). By default, a timestep size of 0.005 is used, and 4 simulation steps are taken per rendered frame (Note that `scripts/xvfb.sh` overrides these default values with `dt = 0.001` and `simIterationsPerFrame = 5`).
+
+To increase the simulation time by a factor of 5, for example, simply divide `dt` by 5 and multiply `simIterationsPerFrame` by 5. This will produce *almost* identical output. Take care with *increasing* `dt` to get the opposite effect; above a certain value, the simulation will become unstable & you may see this manifest as unphysical behaviour (very fast moving stars exploding out from the centre). Instability at large `dt` can be mitigated, to an extent, by increasing `distEps` or `damping`.
 
 ## SYCL vs. CUDA performance
 
