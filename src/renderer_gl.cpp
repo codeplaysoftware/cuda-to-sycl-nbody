@@ -272,22 +272,22 @@ void RendererGL::render(glm::mat4 proj_mat, glm::mat4 view_mat) {
 
    // Blur pingpong (N horizontal blurs then N vertical blurs)
 
-   if (1) {
-      int loop = 0;
-      for (int i = 0; i < 2; ++i) {
-         if (i == 0)
-            glProgramUniform2f(programBlur.getId(), 1, 1, 0);
-         else
-            glProgramUniform2f(programBlur.getId(), 1, 0, 1);
-         for (int j = 0; j < 1; ++j) {
-            GLuint fbo = fbos[(loop % 2) + 1];
-            GLuint attach = attachs[loop ? ((loop + 1) % 2 + 1) : 0];
-            glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-            glBindTextureUnit(0, attach);
-            glDrawArrays(GL_TRIANGLES, 0, 3);
-            loop++;
-         }
+   const int nPasses = 1; // Only one blur pass in each direction
+   int loop = 0;
+   for (int i = 0; i < 2; ++i) {
+      if (i == 0)
+         glProgramUniform2f(programBlur.getId(), 1, 1, 0);
+      else
+         glProgramUniform2f(programBlur.getId(), 1, 0, 1);
+      for (int j = 0; j < nPasses; ++j) {
+         GLuint fbo = fbos[(loop % 2) + 1];
+         GLuint attach = attachs[loop ? ((loop + 1) % 2 + 1) : 0];
+         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+         glBindTextureUnit(0, attach);
+         glDrawArrays(GL_TRIANGLES, 0, 3);
+         loop++;
       }
+   }
    }
 
    // Average luminance

@@ -66,7 +66,10 @@ Render targets for all passes except the last use dimensions a bit larger than t
 Each particle is rendered as a fixed-size flare, generated from a gaussian. Particle color depends on velocity, blue at low speeds and purple at high speeds. Additive blending is set, so dense regions look bright. The render target is RGBA16F, because GL_R11F_G11F_B10F looks yellow on subsequent render passes.
 
 #### Bloom
-No highpass step since I think all stars should 'shine': no bloom around a flare looks dull. Two RGBA16F half-resolution render targets are used for multiple gaussian blur passes (ping pong targets). It is only a 5-tap blur but it's better for locality even at the cost of several more passes. Horizontal blur passes first, vertical last, to prevent expensive shader switches.
+
+Bloom is applied through a seperable Gaussian blur, applied once in the horizontal and then the vertical direction. The 1D Gaussian kernel is computed by `RendererGL::gaussKernel` and optimized to minimize texel lookups by `RendererGL::optimGaussKernel` following [this guide](https://www.rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/). At present, a gaussian window of 49 pixels with sigma = 10.0 is used. Multiple passes are possible (ping pong between two RGBA16F frame buffers), though at present we execute only one blur in each direction.
+
+Note that unlike typical bloom processing, there is no extraction of bright light sources prior to blurring, because the scene (bright stars on a dark background) makes this obsolete.
 
 #### Average luminance
 The average luminance of the scene is computed from the HDR target into a downscaled R16F target. Then we generate mipmaps to obtain the average luminance on the smallest mipmap (1x1). (Could also be obtained from a 2x2 texture but screen-size targets always seem to resolve down to odd dimensions)
