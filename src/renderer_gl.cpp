@@ -7,6 +7,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <stdexcept>
+#include <iostream>
+#include <numeric>
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -232,6 +234,16 @@ void RendererGL::setUniforms() {
    // Blur sample offset length
    glProgramUniform2f(programBlur.getId(), 0, (float)blurDownscale / width_,
                       (float)blurDownscale / height_);
+
+   // Compute optimized 1D gaussian kernel & send to device
+   auto optimGauss = optimGaussKernel(gaussKernel(10.0, 25));
+   auto offsets = optimGauss.first;
+   auto weights = optimGauss.second;
+
+   assert(offsets.size() < 100 && "Maximum Gaussian kernel size exceeded!");
+   glProgramUniform1i(programBlur.getId(), 2, offsets.size());
+   glProgramUniform1fv(programBlur.getId(), 3, offsets.size(), offsets.data());
+   glProgramUniform1fv(programBlur.getId(), 103, offsets.size(), weights.data());
 }
 
 void RendererGL::render(glm::mat4 proj_mat, glm::mat4 view_mat) {
@@ -259,22 +271,23 @@ void RendererGL::render(glm::mat4 proj_mat, glm::mat4 view_mat) {
    glUseProgram(programBlur.getId());
 
    // Blur pingpong (N horizontal blurs then N vertical blurs)
-   if (0) {
-      int loop = 0;
-      for (int i = 0; i < 2; ++i) {
-         if (i == 0)
-            glProgramUniform2f(programBlur.getId(), 1, 1, 0);
-         else
-            glProgramUniform2f(programBlur.getId(), 1, 0, 1);
-         for (int j = 0; j < 100; ++j) {
-            GLuint fbo = fbos[(loop % 2) + 1];
-            GLuint attach = attachs[loop ? ((loop + 1) % 2 + 1) : 0];
-            glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-            glBindTextureUnit(0, attach);
-            glDrawArrays(GL_TRIANGLES, 0, 3);
-            loop++;
-         }
+
+   const int nPasses = 1; // Only one blur pass in each direction
+   int loop = 0;
+   for (int i = 0; i < 2; ++i) {
+      if (i == 0)
+         glProgramUniform2f(programBlur.getId(), 1, 1, 0);
+      else
+         glProgramUniform2f(programBlur.getId(), 1, 0, 1);
+      for (int j = 0; j < nPasses; ++j) {
+         GLuint fbo = fbos[(loop % 2) + 1];
+         GLuint attach = attachs[loop ? ((loop + 1) % 2 + 1) : 0];
+         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+         glBindTextureUnit(0, attach);
+         glDrawArrays(GL_TRIANGLES, 0, 3);
+         loop++;
       }
+   }
    }
 
    // Average luminance
@@ -295,6 +308,62 @@ void RendererGL::render(glm::mat4 proj_mat, glm::mat4 view_mat) {
    glBindTextureUnit(1, attachs[2]);
    glBindTextureUnit(2, attachs[3]);
    glDrawArrays(GL_TRIANGLES, 0, 3);
+}
+
+std::vector<float> RendererGL::gaussKernel(const float sigma,
+                                           const int halfwidth) {
+   float sigma_factor = 1.0 / (sigma * sqrt(2 * glm::pi<float>()));
+
+   auto sigma_fun = [sigma, sigma_factor, n = 0]() mutable {
+      float sigma_val =
+          sigma_factor * glm::exp(-glm::pow(static_cast<float>(n), 2) /
+                                  (2 * glm::pow(sigma, 2)));
+      n++;
+      return sigma_val;
+   };
+
+   std::vector<float> result(halfwidth);
+   std::generate(result.begin(), result.end(), sigma_fun);
+
+   // Normalize the Gaussian kernel
+   float halfnorm = std::accumulate(result.begin() + 1, result.end(), 0.0);
+   float norm = 2 * halfnorm + result[0];
+
+   std::transform(result.begin(), result.end(), result.begin(),
+                  [&norm](auto &val) { return val / norm; });
+
+   return result;
+}
+
+std::pair<std::vector<float>, std::vector<float>> RendererGL::optimGaussKernel(
+    const std::vector<float> weightsIn) {
+   const int inSize = weightsIn.size();
+   const int outSize = (inSize / 2) + 1;
+
+   std::vector<float> offsetsIn(inSize);
+   std::iota(offsetsIn.begin(), offsetsIn.end(), 0);
+
+   std::vector<float> offsetsOut(outSize);
+   std::vector<float> weightsOut(outSize);
+
+   // Centre point of gaussian doesn't change
+   offsetsOut[0] = offsetsIn[0];  // 0.0
+   weightsOut[0] = weightsIn[0];
+
+   // Convert pairs of neighbouring texel weights into a single
+   // weight linearly interpolated between texels. Take care of
+   // possible last lone weight.
+   for (int i = 1; i < outSize; i++) {
+      weightsOut[i] = weightsIn[i * 2 - 1];
+      offsetsOut[i] = offsetsIn[i * 2 - 1];
+      if (i * 2 < inSize) {
+         weightsOut[i] += weightsIn[i * 2];
+         offsetsOut[i] = (offsetsIn[i * 2 - 1] * weightsIn[i * 2 - 1] +
+                          offsetsIn[i * 2] * weightsIn[i * 2]) /
+                         weightsOut[i];
+      }
+   }
+   return std::make_pair(offsetsOut, weightsOut);
 }
 
 void RendererGL::destroy() {}
