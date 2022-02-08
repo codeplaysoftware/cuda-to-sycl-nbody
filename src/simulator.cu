@@ -42,7 +42,7 @@ namespace simulation {
       // submission until host synchronization. This is more portable via
       // dpct.
       auto start = std::chrono::steady_clock::now();
-      for (size_t i = 0; i < params.maxIterationsPerFrame; i++) {
+      for (size_t i = 0; i < params.simIterationsPerFrame; i++) {
          particle_interaction<<<nblocks, wg_size>>>(pos_d, pos_next_d, vel_d,
                                                     params);
          std::swap(pos_d, pos_next_d);

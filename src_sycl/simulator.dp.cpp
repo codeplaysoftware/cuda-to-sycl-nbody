@@ -47,7 +47,7 @@ namespace simulation {
       // submission until host synchronization. This is more portable via
       // dpct.
       auto start = std::chrono::steady_clock::now();
-      for (size_t i = 0; i < params.maxIterationsPerFrame; i++) {
+      for (size_t i = 0; i < params.simIterationsPerFrame; i++) {
          dpct::get_default_queue().submit([&](sycl::handler &cgh) {
             auto pos_d_ct0 = pos_d;
             auto pos_next_d_ct1 = pos_next_d;
