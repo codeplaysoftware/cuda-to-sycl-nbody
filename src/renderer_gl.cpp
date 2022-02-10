@@ -316,8 +316,8 @@ std::vector<float> RendererGL::gaussKernel(const float sigma,
 
    auto sigma_fun = [sigma, sigma_factor, n = 0]() mutable {
       float sigma_val =
-          sigma_factor * glm::exp(-glm::pow(static_cast<float>(n), 2) /
-                                  (2 * glm::pow(sigma, 2)));
+          sigma_factor * std::exp(-std::pow(static_cast<float>(n), 2) /
+                                  (2 * std::pow(sigma, 2)));
       n++;
       return sigma_val;
    };
