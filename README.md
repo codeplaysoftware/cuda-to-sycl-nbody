@@ -67,6 +67,14 @@ will run on a CPU through the OpenCL backend.
      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsycl -fsycl-targets=spir64,nvptx64-nvidia-cuda -fsycl-unnamed-lambda")
 ```
 
+### Adapting the project for DPC++ OpenCL
+
+No changes to the code were required, but there were a couple of bugs which are worked around.
+
+Firstly, when building for multiple targets (`-fsycl-targets`), there is a [recent bug](https://github.com/intel/llvm/issues/5330) which causes failure to link to static libraries. The workaround for this is to switch from building `imgui` as a static to a shared library.
+
+Secondly, I encountered the common CL header bug (see [here](https://github.com/intel/llvm/issues/2617) and [here](https://github.com/oneapi-src/oneDNN/issues/885)). This turned out to be triggered for the `spir64` backend because the CUDA headers were included *only* via `-I` and not via `-internal-isystem`. This caused them to take precedence over SYCL CL headers. The solution was to not include CUDA headers in `src_sycl/CMakeLists.txt`, which turned out to be unnecessary anyway.
+
 ## Passing data between OpenGL & CUDA/SYCL
 
 OpenGL & CUDA are capable of interoperating to share device memory, but this will not play well with the DPC++ Compatibility Tool. Instead, computed particle positions are migrated back to the host by CUDA/SYCL, then sent *back* to OpenGL via mapping.

@@ -1,4 +1,4 @@
-add_library(imgui STATIC
+add_library(imgui SHARED
     src/imgui.cpp
     src/imgui_widgets.cpp
     src/imgui_demo.cpp
