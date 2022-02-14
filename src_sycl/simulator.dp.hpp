@@ -30,10 +30,11 @@ namespace simulation {
    typedef float coords_t;
 
    struct vec3 {
-      coords_t x;
-      coords_t y;
-      coords_t z;
+      coords_t x = 0.0;
+      coords_t y = 0.0;
+      coords_t z = 0.0;
 
+      HOSTDEV vec3() {};
       HOSTDEV vec3(coords_t x_, coords_t y_, coords_t z_)
           : x{x_}, y{y_}, z{z_} {}
 
@@ -77,11 +78,10 @@ namespace simulation {
 
    // Simply holds 3 coords_t* as a SoA
    struct ParticleData_d {
-      coords_t *x;
-      coords_t *y;
-      coords_t *z;
+      coords_t *x = nullptr;
+      coords_t *y = nullptr;
+      coords_t *z = nullptr;
 
-      ParticleData_d() = delete;
       ParticleData_d(size_t n) {
    dpct::device_ext &dev_ct1 = dpct::get_current_device();
    sycl::queue &q_ct1 = dev_ct1.default_queue();
@@ -136,7 +136,6 @@ namespace simulation {
 
    class DiskGalaxySimulator : public Simulator {
      public:
-      // DiskGalaxySimulator() = delete; // no default ctor
       DiskGalaxySimulator(SimParam params_);
 
       void stepSim();

@@ -288,7 +288,6 @@ void RendererGL::render(glm::mat4 proj_mat, glm::mat4 view_mat) {
          loop++;
       }
    }
-   }
 
    // Average luminance
    glViewport(0, 0, (width_ + 2 * FBO_MARGIN) / 2,
@@ -316,8 +315,8 @@ std::vector<float> RendererGL::gaussKernel(const float sigma,
 
    auto sigma_fun = [sigma, sigma_factor, n = 0]() mutable {
       float sigma_val =
-          sigma_factor * glm::exp(-glm::pow(static_cast<float>(n), 2) /
-                                  (2 * glm::pow(sigma, 2)));
+          sigma_factor * std::exp(-std::pow(static_cast<float>(n), 2) /
+                                  (2 * std::pow(sigma, 2)));
       n++;
       return sigma_val;
    };
@@ -330,7 +329,7 @@ std::vector<float> RendererGL::gaussKernel(const float sigma,
    float norm = 2 * halfnorm + result[0];
 
    std::transform(result.begin(), result.end(), result.begin(),
-                  [&norm](auto &val) { return val / norm; });
+                  [norm](auto val) { return val / norm; });
 
    return result;
 }

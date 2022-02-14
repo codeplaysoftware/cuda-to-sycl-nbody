@@ -48,7 +48,8 @@ class RendererGL : public Renderer {
    void setParticleData(const GLuint buffer, const ParticleData &data);
 
    // Compute the 1D gaussian kernel for given sigma & halfwidth
-   static std::vector<float> gaussKernel(const float sigma, const int halfwidth);
+   static std::vector<float> gaussKernel(const float sigma,
+                                         const int halfwidth);
 
    // Optimizes the given 1D gaussian kernel via texel linear interp
    static std::pair<std::vector<float>, std::vector<float>> optimGaussKernel(
