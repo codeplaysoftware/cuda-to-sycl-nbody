@@ -330,7 +330,7 @@ std::vector<float> RendererGL::gaussKernel(const float sigma,
    float norm = 2 * halfnorm + result[0];
 
    std::transform(result.begin(), result.end(), result.begin(),
-                  [&norm](auto &val) { return val / norm; });
+                  [norm](auto val) { return val / norm; });
 
    return result;
 }
