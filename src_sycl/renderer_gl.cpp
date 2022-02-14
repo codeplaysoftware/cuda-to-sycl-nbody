@@ -288,7 +288,6 @@ void RendererGL::render(glm::mat4 proj_mat, glm::mat4 view_mat) {
          loop++;
       }
    }
-   }
 
    // Average luminance
    glViewport(0, 0, (width_ + 2 * FBO_MARGIN) / 2,
