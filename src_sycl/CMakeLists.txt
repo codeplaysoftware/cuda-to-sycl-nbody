@@ -6,6 +6,9 @@ find_package(glm REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
+set(MKL_DIR CACHE STRING "/opt/intel/oneapi/mkl/latest/lib/cmake/mkl")
+find_package(MKL REQUIRED)
+
 set(COMMON_SOURCE 
 	nbody.cpp 
 	camera.cpp 
@@ -23,9 +26,6 @@ target_compile_definitions(nbodygl PRIVATE -DUSE_OPENGL)
 
 target_compile_features(nbodygl PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
 
-target_include_directories(nbodygl PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-	/opt/intel/oneapi/mkl/2022.0.1/include/
-	)
+target_include_directories(nbodygl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_link_libraries(nbodygl PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL)
+target_link_libraries(nbodygl PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL MKL::MKL)
