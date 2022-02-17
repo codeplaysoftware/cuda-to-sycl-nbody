@@ -6,9 +6,6 @@ find_package(glm REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
-set(MKL_DIR CACHE STRING "/opt/intel/oneapi/mkl/latest/lib/cmake/mkl")
-find_package(MKL REQUIRED)
-
 set(COMMON_SOURCE 
 	nbody.cpp 
 	camera.cpp 
@@ -28,4 +25,12 @@ target_compile_features(nbodygl PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
 
 target_include_directories(nbodygl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_link_libraries(nbodygl PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL MKL::MKL)
+target_link_libraries(nbodygl PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL)
+
+if(CMAKE_CXX_COMPILER MATCHES ".*dpcpp[.exe]*")
+	set(MKL_DIR CACHE STRING "/opt/intel/oneapi/mkl/latest/lib/cmake/mkl")
+	find_package(MKL REQUIRED)
+	target_link_libraries(nbodygl PRIVATE MKL::MKL_DPCPP)
+endif()
+
+
