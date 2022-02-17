@@ -32,6 +32,8 @@ The DPC++ compatibility tool offers options for intercepting complex builds, but
 ### CMake
 
 The option `-DBUILD_SYCL` switches between building the CUDA version & the SYCL version of the code.
+When compiling SYCL with `dpcpp`, `MKL_DIR` can be set to point to the `MKLConfig.cmake` file, this defaults to `/opt/intel/oneapi/mkl/latest/lib/cmake/mkl`.
+Environment variables must be set by sourcing `setvars.sh` located at `/opt/intel/oneapi/setvars.sh`.
 
 ## Passing data between OpenGL & CUDA/SYCL
 
