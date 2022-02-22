@@ -28,9 +28,7 @@ target_include_directories(nbodygl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(nbodygl PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL)
 
 if(CMAKE_CXX_COMPILER MATCHES ".*dpcpp[.exe]*")
-	set(MKL_DIR CACHE STRING "/opt/intel/oneapi/mkl/latest/lib/cmake/mkl")
-	find_package(MKL REQUIRED)
-	target_link_libraries(nbodygl PRIVATE MKL::MKL_DPCPP)
+	target_compile_options(nbodygl PRIVATE -fsycl)
 endif()
 
 
