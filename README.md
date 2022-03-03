@@ -49,10 +49,9 @@ The ComputeCpp Experimental Host backend requires the proprietary ComputeCpp bin
 
 This project uses CMake for build configuration. Build scripts for CUDA, DPC++ and ComputeCpp are located in `./scripts/`. Note that these scripts include some hardcoded paths from our dev machine, and so will not work out-the-box.
 
-### CMake
+The CMake option `-DBACKEND` allows to select which backend ("CUDA", "DPCPP", or "COMPUTECPP") to build. CUDA is built by default. The name of the built binary is suffixed with the backend (`nbody_cuda`, `nbody_dpcpp`, or `nbody_computecpp`).
 
-The option `-DBUILD_SYCL` switches between building the CUDA version & the SYCL version of the code.
-
+The DPC++ backend, in turn, supports both an OpenCL & CUDA backend, both of which are built by default. If you are building on a machine without CUDA support, you can switch off the DPC++ CUDA backend with the flag `-DDPCPP_CUDA_SUPPORT=off`.
 
 ## Converting CUDA to SYCL
 
@@ -79,11 +78,11 @@ The `sycl-ls` tool allows you to check for available backends on the system. For
 By specifying the environment variable `SYCL_DEVICE_FILTER`, it's possible to switch between running with the CUDA backend and the OpenCL host backend. For example:
 
 ```
-    SYCL_DEVICE_FILTER=cuda ./nbodygl
+    SYCL_DEVICE_FILTER=cuda ./nbody_dpcpp
 ```
 will run on the CUDA backend, whereas:
 ```
-    SYCL_DEVICE_FILTER=opencl:cpu ./nbodygl
+    SYCL_DEVICE_FILTER=opencl:cpu ./nbody_dpcpp
 ```
 will run on a CPU through the OpenCL backend. Note the correspondence between options for `SYCL_DEVICE_FILTER` and the output of `sycl-ls`.
 
@@ -97,7 +96,7 @@ will run on a CPU through the OpenCL backend. Note the correspondence between op
 The experimental ComputeCpp distribution will *only* work with the host backend, and this must be specified with the `COMPUTECPP_TARGET` environment variable:
 
 ```
-COMPUTECPP_TARGET=host ./nbodygl
+COMPUTECPP_TARGET=host ./nbody_computecpp
 ```
 
 ### Adapting the project for DPC++ OpenCL
@@ -129,7 +128,7 @@ A drag factor (`damping`) is used to regulate the velocity. At each timestep, th
 
 The `parameters` described in this section can all be adjusted via command line arguments, as follows:
 
-`./nbodygl numParticles simIterationsPerFrame damping dt distEps G`
+`./nbody_cuda numParticles simIterationsPerFrame damping dt distEps G`
 
 Note that `numParticles` specifies the number of particles simulated, divided by blocksize (i.e. setting `numParticles` to 50 produces 50*256 particles). `simIterationsPerFrame` specifies how many steps of the simulation to take before rendering the next frame. For default values for all of these parameters, refer to `sim_param.cpp`.
 
@@ -166,9 +165,9 @@ The exposure of the final render is obtained from the average luminance, and the
 
 ## Running headless
 
-If you `nbodygl` on a remote machine with X-forwarding, sending the rendered frames across the net will be a significant bottleneck. This can be worked around by making use of [Xvfb](https://linux.die.net/man/1/xvfb) which provides a *virtual* X display. You can then read from the memory mapped file to write to e.g. MP4 output. 
+If you `nbody_cuda` on a remote machine with X-forwarding, sending the rendered frames across the net will be a significant bottleneck. This can be worked around by making use of [Xvfb](https://linux.die.net/man/1/xvfb) which provides a *virtual* X display. You can then read from the memory mapped file to write to e.g. MP4 output. 
 
-The script `./scripts/xvfb.sh` runs `nbodygl` in this manner, producing a video file `output.mp4`. Note that this script will run the simulation until manually terminated.
+The script `./scripts/xvfb.sh` runs `nbody_cuda` in this manner, producing a video file `output.mp4`. Note that this script will run the simulation until manually terminated.
 
 ## Performance Scaling for Demos
 
