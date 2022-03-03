@@ -61,6 +61,16 @@ The DPC++ compatibility tool offers options for intercepting complex builds, but
 
 ## Running on different platforms
 
+The script `./scripts/run_nbody.sh` will run the nbody simulation, selecting a different binary based on the `-b` flag, where `-b` can be any of: `cuda`, `dpcpp`, `computecpp`. Subsequent positional arguments are passed on to the `nbody` binary. These positions args are described in the [Simulation](#Simulation) section. For example, to run on the DPC++ OpenCL host backend with 25600 (100 * 256) particles, executing 10 timesteps per rendered frame:
+
+```
+./scripts/run_nbody.sh -b dpcpp 100 10
+```
+
+Note that this script runs `nbody` with the default X window, as opposed to using [xvfb](#Running-headless). This makes it unsuitable for running on a remote machine.
+
+`run_nbody.sh` is a simple wrapper around the `nbody_*` binaries with some environment variables set; the sections below describe how to launch the binaries directly.
+
 ### Detecting available SYCL backends
 
 The `sycl-ls` tool allows you to check for available backends on the system. For example, on a system with Intel OpenCL CPU runtime & CUDA runtime, the output is:
