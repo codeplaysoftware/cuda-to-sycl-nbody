@@ -1,17 +1,25 @@
 # nbody
-CUDA N-body sim with OpenGL graphics & automatically CUDA->SYCL conversion using [dpct](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compatibility-tool.html).
+Accelerated N-body sim with OpenGL graphics & automatic CUDA->SYCL conversion using [dpct](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compatibility-tool.html).
 
 ![](http://i.imgur.com/drzi33P.jpg)
 
 Forked from https://github.com/salel/nbody
 
-## Building
+## Compilers/Backends
 
-Build scripts for both versions (CUDA & SYCL) are located in `./scripts/`, & depend on cmake.
+This nbody simulation can be run with any of:
+ - CUDA
+ - DPC++ CUDA backend
+ - DPC++ OpenCL CPU backend
+ - ComputeCpp Experimental Host Backend
+
+Source code for the CUDA version is in `./src/` while `./src_sycl/` contains the semi-automatically converted SYCL code.
+
+## Build Dependencies
 
 ### Graphics Dependencies
 
-The rendering components of this code depend on:
+The rendering components of this code are independent of the CUDA/SYCL backend, and depend on:
  - GLM
  - GLFW
  - GLEW
@@ -21,13 +29,40 @@ These can be installed with apt:
 sudo apt update
 sudo apt install libglew-dev libglfw3-dev libglm-dev libxxf86vm-dev libxcursor-dev libxinerama-dev libxi-dev
 ```
-Remember that you need an OpenGL 4.5 ready graphics card. Radeon 7xxx or Geforce GTX 4xx. No OSX. Maybe Intel.
+
+The implementation relies on OpenGL 4.5.
 
 ### Simulation Dependencies (CUDA & SYCL)
 
-The CUDA version of this code requires the CUDA runtime to be installed on your machine.
+The CUDA version of this code requires the [CUDA runtime](https://intel.github.io/llvm-docs/GetStartedGuide.html#build-dpc-toolchain-with-support-for-nvidia-cuda) to be installed on your machine.
 
-The SYCL version also requires [installation of the CUDA runtime](https://intel.github.io/llvm-docs/GetStartedGuide.html#build-dpc-toolchain-with-support-for-nvidia-cuda) to run using SYCL's CUDA backend, or an [OpenCL runtime](https://intel.github.io/llvm-docs/GetStartedGuide.html#install-low-level-runtime) to run using SYCL's OpenCL backend. Furthermore, the [DPC++ compiler](https://intel.github.io/llvm-docs/GetStartedGuide.html) is required to compile the SYCL code.
+The DPC++ CUDA backend version also requires the CUDA runtime.
+
+The DPC++ OpenCL backend requires an [OpenCL runtime](https://intel.github.io/llvm-docs/GetStartedGuide.html#install-low-level-runtime). To run specifically on the CPU, you must install the OpenCL runtime for your CPU.
+
+Both DPC++ backends require the [DPC++ compiler](https://intel.github.io/llvm-docs/GetStartedGuide.html) to compile the SYCL code.
+
+The ComputeCpp Experimental Host backend requires the proprietary ComputeCpp binary which you should have received from Codeplay, and an OpenCL runtime.
+
+
+## Building
+
+This project uses CMake for build configuration. Build scripts for CUDA, DPC++ and ComputeCpp are located in `./scripts/`. Note that these scripts include some hardcoded paths from our dev machine, and so will not work out-the-box.
+
+### CMake
+
+The option `-DBUILD_SYCL` switches between building the CUDA version & the SYCL version of the code.
+
+
+## Converting CUDA to SYCL
+
+The script `./scripts/run_dpct.sh` calls a containerized version of the DPC++ Compatibility Tool to automatically convert the CUDA components of this project into SYCL. A docker container was used because the dev machine has an incompatible version of the CUDA driver. This should be adapted based on your environment. 
+
+The DPC++ compatibility tool offers options for intercepting complex builds, but current dev environment restrictions require me to run dpct inside a docker container. This complicates things, so for now I'm just doing single source conversion on the simulator.cu file.
+
+## Running on different platforms
+
+### Detecting available SYCL backends
 
 The `sycl-ls` tool allows you to check for available backends on the system. For example, on a system with Intel OpenCL CPU runtime & CUDA runtime, the output is:
 
@@ -39,19 +74,9 @@ The `sycl-ls` tool allows you to check for available backends on the system. For
 [host:host:0] SYCL host platform, SYCL host device 1.2 [1.2]
 ```
 
-### Converting CUDA to SYCL
+### Selecting a backend (DPC++)
 
-The script ./scripts/run_dpct.sh calls a containerized version of the DPC++ Compatibility Tool to automatically convert the CUDA components of this project into SYCL. A docker container was used because the dev machine has an incompatible version of the CUDA driver. This should be adapted based on your environment. 
-
-The DPC++ compatibility tool offers options for intercepting complex builds, but current dev environment restrictions require me to run dpct inside a docker container. This complicates things, so for now I'm just doing single source conversion on the simulator.cu file.
-
-### CMake
-
-The option `-DBUILD_SYCL` switches between building the CUDA version & the SYCL version of the code.
-
-## Running on different platforms
-
-By specifying the environment variable SYCL_DEVICE_FILTER, it's possible to switch between running with the CUDA backend and the OpenCL backend. For example:
+By specifying the environment variable `SYCL_DEVICE_FILTER`, it's possible to switch between running with the CUDA backend and the OpenCL host backend. For example:
 
 ```
     SYCL_DEVICE_FILTER=cuda ./nbodygl
@@ -60,11 +85,19 @@ will run on the CUDA backend, whereas:
 ```
     SYCL_DEVICE_FILTER=opencl:cpu ./nbodygl
 ```
-will run on a CPU through the OpenCL backend. 
+will run on a CPU through the OpenCL backend. Note the correspondence between options for `SYCL_DEVICE_FILTER` and the output of `sycl-ls`.
 
-**Note**: this is possible because `CMakeLists.txt` specifies building the SYCL code for both CUDA & OpenCL backends:
+**Note**: Selection between DPC++ backends at runtime is possible because `CMakeLists.txt` specifies building the SYCL code for both CUDA (`nvptx64-nvidia-cuda`) & OpenCL (`spir64`) targets:
 ```
      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsycl -fsycl-targets=spir64,nvptx64-nvidia-cuda -fsycl-unnamed-lambda")
+```
+
+### Selecting the ComputeCpp Host Backend
+
+The experimental ComputeCpp distribution will *only* work with the host backend, and this must be specified with the `COMPUTECPP_TARGET` environment variable:
+
+```
+COMPUTECPP_TARGET=host ./nbodygl
 ```
 
 ### Adapting the project for DPC++ OpenCL
