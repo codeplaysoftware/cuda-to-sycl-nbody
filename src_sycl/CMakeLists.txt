@@ -57,7 +57,13 @@ else() #DPCPP
 		message( FATAL_ERROR "Invalid C++ compiler for SYCL compilation" )
 	endif()
 
-	set(SYCL_FLAGS -fsycl -fsycl-targets=spir64,nvptx64-nvidia-cuda -fsycl-unnamed-lambda)
+	option(DPCPP_CUDA_SUPPORT "on")
+	if(DPCPP_CUDA_SUPPORT)
+		set(SYCL_FLAGS -fsycl -fsycl-targets=spir64,nvptx64-nvidia-cuda -fsycl-unnamed-lambda)
+	else()
+		set(SYCL_FLAGS -fsycl -fsycl-targets=spir64 -fsycl-unnamed-lambda)
+	endif()
+
 	target_compile_options(${BINARY_NAME} PRIVATE ${SYCL_FLAGS})
 	target_link_options(${BINARY_NAME} PRIVATE ${SYCL_FLAGS})
 
