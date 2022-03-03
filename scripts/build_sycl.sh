@@ -8,12 +8,12 @@ BUILD_DIR="build_sycl"
 
 rm -rf $BUILD_DIR
 mkdir $BUILD_DIR
-cd $BUILD_DIR
+cd $BUILD_DIR || exit
 
 CXX=clang++ \
 CC=clang \
 cmake ../ \
 -DGLEW_LIBRARY=/usr/lib/x86_64-linux-gnu/libGLEW.so \
--DBUILD_SYCL=on
+-DBUILD_SYCL=on || exit
 
 make
