@@ -17,15 +17,15 @@ set(OPENGL_SOURCE
 	renderer_gl.cpp 
 	shader.cpp)
 
-add_executable(nbodygl ${COMMON_SOURCE} ${OPENGL_SOURCE})
+add_executable(${BINARY_NAME} ${COMMON_SOURCE} ${OPENGL_SOURCE})
 
-target_compile_definitions(nbodygl PRIVATE -DUSE_OPENGL)
+target_compile_definitions(${BINARY_NAME} PRIVATE -DUSE_OPENGL)
 
-target_compile_features(nbodygl PRIVATE cxx_auto_type cxx_nullptr cxx_range_for cxx_std_17)
+target_compile_features(${BINARY_NAME} PRIVATE cxx_auto_type cxx_nullptr cxx_range_for cxx_std_17)
 
-target_include_directories(nbodygl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(${BINARY_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_link_libraries(nbodygl PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL)
+target_link_libraries(${BINARY_NAME} PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL)
 
 if(BACKEND STREQUAL "COMPUTECPP")
 
@@ -40,15 +40,15 @@ if(BACKEND STREQUAL "COMPUTECPP")
 		-mllvm -local_mem_pools_size=5000
 		-march=native -sycl-target host-x86_64)
 
-	target_include_directories(nbodygl PRIVATE
+	target_include_directories(${BINARY_NAME} PRIVATE 
 		${ComputeCpp_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIR})
 
-	target_link_libraries(nbodygl PRIVATE ComputeCpp::ComputeCpp)
+	target_link_libraries(${BINARY_NAME} PRIVATE ComputeCpp::ComputeCpp)
 
-	target_compile_definitions(nbodygl INTERFACE
+	target_compile_definitions(${BINARY_NAME} INTERFACE
     	SYCL_LANGUAGE_VERSION=${SYCL_LANGUAGE_VERSION})
 
-	add_sycl_to_target(TARGET nbodygl SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/simulator.dp.cpp)
+	add_sycl_to_target(TARGET ${BINARY_NAME} SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/simulator.dp.cpp)
 
 else() #DPCPP
 
@@ -58,7 +58,7 @@ else() #DPCPP
 	endif()
 
 	set(SYCL_FLAGS -fsycl -fsycl-targets=spir64,nvptx64-nvidia-cuda -fsycl-unnamed-lambda)
-	target_compile_options(nbodygl PRIVATE ${SYCL_FLAGS})
-	target_link_options(nbodygl PRIVATE ${SYCL_FLAGS})
+	target_compile_options(${BINARY_NAME} PRIVATE ${SYCL_FLAGS})
+	target_link_options(${BINARY_NAME} PRIVATE ${SYCL_FLAGS})
 
 endif()

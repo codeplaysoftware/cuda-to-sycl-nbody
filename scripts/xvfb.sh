@@ -13,7 +13,8 @@ rm /var/tmp/Xvfb_screen_0
 Xvfb :99 -screen 0 1920x1080x16 -fbdir /var/tmp &
 
 # Run the nbody simulation on this screen
-DISPLAY=:99.0 ./nbodygl 50 5 0.999 0.001 1.0e-3 2.0 &
+DISPLAY=:99.0 ./nbody_cuda 50 5 0.999 0.001 1.0e-3 2.0 &
+#DISPLAY=:99.0 ./nbody_cuda 250 5 0.999 0.001 1.0e-3 2.0 &
 
 # To take a screenshot instead of a video (doesn't always work):
 # sleep 2
