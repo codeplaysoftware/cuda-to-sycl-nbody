@@ -27,9 +27,8 @@ target_include_directories(nbodygl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_link_libraries(nbodygl PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL)
 
-option(USE_COMPUTECPP "whether to use ComputeCpp compiler" OFF)
+if(BACKEND STREQUAL "COMPUTECPP")
 
-if(USE_COMPUTECPP)
 	find_package(ComputeCpp REQUIRED)
 
 	set(CMAKE_CXX_COMPILER ${ComputeCpp_DEVICE_COMPILER_EXECUTABLE})
@@ -50,7 +49,8 @@ if(USE_COMPUTECPP)
     	SYCL_LANGUAGE_VERSION=${SYCL_LANGUAGE_VERSION})
 
 	add_sycl_to_target(TARGET nbodygl SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/simulator.dp.cpp)
-else()
+
+else() #DPCPP
 
 	if(NOT ((CMAKE_CXX_COMPILER MATCHES ".*dpcpp(\\.exe)?$") OR
                 (CMAKE_CXX_COMPILER MATCHES ".*clang\\+\\+(\\.exe)?$")))
@@ -60,4 +60,5 @@ else()
 	set(SYCL_FLAGS -fsycl -fsycl-targets=spir64,nvptx64-nvidia-cuda -fsycl-unnamed-lambda)
 	target_compile_options(nbodygl PRIVATE ${SYCL_FLAGS})
 	target_link_options(nbodygl PRIVATE ${SYCL_FLAGS})
+
 endif()
