@@ -1,3 +1,5 @@
+# Copyright (C) 2022 Codeplay Software Limited
+
 add_library(imgui SHARED
     src/imgui.cpp
     src/imgui_widgets.cpp

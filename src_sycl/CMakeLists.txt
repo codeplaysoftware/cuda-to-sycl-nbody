@@ -1,3 +1,6 @@
+# Copyright (C) 2016 - 2018 Sarah Le Luron
+# Copyright (C) 2022 Codeplay Software Limited
+
 find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(Glew REQUIRED IMPORTED_TARGET glew)
