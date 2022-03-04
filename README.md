@@ -167,6 +167,16 @@ Bloom is applied through a seperable Gaussian blur, applied once in the horizont
 
 Note that unlike typical bloom processing, there is no extraction of bright light sources prior to blurring, because the scene (bright stars on a dark background) makes this obsolete.
 
+The appearance & performance of the blur is controlled by four variables which are not currently exposed as arguments to `nbody_[backend]` but which could be manually modified as desired. The two arguments to the `gaussKernel` function (`sigma` and `halfwidth`) effectively define the 'spread' of the blur. Higher values for `sigma` result in wider blurring, whereas `halfwindow` defines the actual width of the pixel window which is sampled. Higher values of `halfwindow` will decrease performance, as more texel lookups are required. As a general rule, when increasing `sigma`, it will likely be necessary to increase `halfwindow` to avoid an obvious visual cut-off at the edge of the window. Conversely, a wide `halfwindow` with a small `sigma` reduces performance unnecessarily, because texels with negligible contribution will be sampled.
+
+Blur downscaling is a common technique to improve blur performance; the image is downsampled by the factor `blur_dsc` defined in `renderer_gl.cpp`, then the regular blur filter is performed, and finally the image is upscaled again. This is a very cheap way of enhancing the blur effect, but there is an associated artefact:
+
+![DownscaleArtefact](/docs/downscale_artefact.png)
+
+If this artefact is unacceptable, set `blur_dsc = 1` to turn off downscaling. Note however that this will significantly reduce the blurriness, and compensating with wider `halfwindow` or more passes (see below) will cost a lot of rendering time.
+
+Enhanced blurring can also be achieved by executing multiple passes. This is controlled by `nPasses`, and is set to 1 by default. Due to the dominance of blur in the render pipeline, total rendering time should scale pretty much linearly with `nPasses`, so increasing it is a potentially expensive option.
+
 #### Average luminance
 The average luminance of the scene is computed from the HDR target into a downscaled R16F target. Then we generate mipmaps to obtain the average luminance on the smallest mipmap (1x1). (Could also be obtained from a 2x2 texture but screen-size targets always seem to resolve down to odd dimensions)
 
@@ -188,6 +198,8 @@ Firstly, the number of particles (`numParticles` [above](#Simulation)) has a lar
 Alternatively, simulation time can be arbitrarily raised or lowered by changing both timestep size (`dt` [above](#Simulation)) and simultion steps per rendered frame (`simIterationsPerFrame`, [above](#Simulation)). By default, a timestep size of 0.005 is used, and 4 simulation steps are taken per rendered frame (Note that `scripts/xvfb.sh` overrides these default values with `dt = 0.001` and `simIterationsPerFrame = 5`).
 
 To increase the simulation time by a factor of 5, for example, simply divide `dt` by 5 and multiply `simIterationsPerFrame` by 5. This will produce *almost* identical output. Take care with *increasing* `dt` to get the opposite effect; above a certain value, the simulation will become unstable & you may see this manifest as unphysical behaviour (very fast moving stars exploding out from the centre). Instability at large `dt` can be mitigated, to an extent, by increasing `distEps` or `damping`.
+
+A significant portion of the rendering time is the bloom filter. The [bloom](#Bloom) section has some tips about how to control this.
 
 ## SYCL vs. CUDA performance
 
