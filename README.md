@@ -175,7 +175,7 @@ The exposure of the final render is obtained from the average luminance, and the
 
 ## Running headless
 
-If you `nbody_cuda` on a remote machine with X-forwarding, sending the rendered frames across the net will be a significant bottleneck. This can be worked around by making use of [Xvfb](https://linux.die.net/man/1/xvfb) which provides a *virtual* X display. You can then read from the memory mapped file to write to e.g. MP4 output. 
+If you run `nbody_cuda` on a remote machine with X-forwarding, sending the rendered frames across the net will be a significant bottleneck. This can be worked around by making use of [Xvfb](https://linux.die.net/man/1/xvfb) which provides a *virtual* X display. You can then read from the memory mapped file to write to e.g. MP4 output. 
 
 The script `./scripts/xvfb.sh` runs `nbody_cuda` in this manner, producing a video file `output.mp4`. Note that this script will run the simulation until manually terminated.
 
