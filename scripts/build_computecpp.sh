@@ -16,6 +16,7 @@ cmake ../ \
 	-DUSE_COMPUTECPP=on \
 	-DComputeCpp_DIR=/home/joetodd/sources/ComputeCpp \
 	-DCOMPUTECPP_BITCODE="host-x86_64" \
+	-DSYCL_LANGUAGE_VERSION=202002\
 	-DOpenCL_LIBRARY=/usr/lib/x86_64-linux-gnu/libOpenCL.so.1 \
 	-DOpenCL_INCLUDE_DIR=/opt/intel/oneapi/compiler/2022.0.1/linux/include/sycl || exit
 

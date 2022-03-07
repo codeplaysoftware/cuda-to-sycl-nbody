@@ -26,6 +26,7 @@ namespace simulation {
 
    DiskGalaxySimulator::DiskGalaxySimulator(SimParam params_)
        : params(params_),
+         myQ{{sycl::property::queue::in_order()}},
          pos(params_.numParticles),
          vel(params_.numParticles),
          pos_d(params_.numParticles, myQ),
