@@ -235,10 +235,10 @@ public:
     // create new default queue.
 #ifdef DPCT_USM_LEVEL_NONE
     _queues.push_back(
-        std::make_shared<cl::sycl::queue>(_ctx, *this, exception_handler));
+        std::make_shared<cl::sycl::queue>(_ctx, *dynamic_cast<cl::sycl::device*>(this), exception_handler));
 #else
     _queues.push_back(std::make_shared<cl::sycl::queue>(
-        _ctx, *this, exception_handler, cl::sycl::property::queue::in_order()));
+        _ctx, *dynamic_cast<cl::sycl::device*>(this), exception_handler, cl::sycl::property::queue::in_order()));
 #endif
     _saved_queue = _default_queue = _queues.front().get();
   }
@@ -264,10 +264,10 @@ public:
     }
 #ifdef DPCT_USM_LEVEL_NONE
     _queues.push_back(std::make_shared<cl::sycl::queue>(
-        _ctx, *this, eh));
+        _ctx, *dynamic_cast<cl::sycl::device*>(this), eh));
 #else
     _queues.push_back(std::make_shared<cl::sycl::queue>(
-        _ctx, *this, eh,
+        _ctx, *dynamic_cast<cl::sycl::device*>(this), eh,
         cl::sycl::property::queue::in_order()));
 #endif
     return _queues.back().get();
