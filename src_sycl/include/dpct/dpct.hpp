@@ -16,12 +16,7 @@
 template <class... Args> class dpct_kernel_name;
 template <int Arg> class dpct_kernel_scalar;
 
-#include "atomic.hpp"
 #include "device.hpp"
-#include "image.hpp"
-#include "kernel.hpp"
-#include "memory.hpp"
-#include "util.hpp"
 
 #if defined(_MSC_VER)
 #define __dpct_align__(n) __declspec(align(n))
