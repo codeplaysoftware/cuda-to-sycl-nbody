@@ -11,6 +11,10 @@
 #
 # The option --assume-nd-range-dim=1 prevents dpct from converting CUDA 1D ranges into SYCL 3D ranges.
 # It's not totally clear why the default behaviour isn't just to keep the CUDA dimensionality.
+#
+# The custom helper header files referred to by the --use-custom-helper flag are already part of this repo
+# and have been modified for ComputeCpp compatibility. As such, we suppress generation of new helper
+# headers when calling dpct with `--use-custom-helper=none`.
 
 rm src_sycl/*.[ch]pp src_sycl/*.yaml
 cp -r src/*[ch]pp src_sycl/
@@ -23,8 +27,9 @@ docker run --rm \
     -it joeatodd/onednn-cuda \
     /dpcpp-ct/bin/dpct --out-root=/nbody/src_sycl \
     --assume-nd-range-dim=1 \
-    --use-custom-helper=all \
+    --use-custom-helper=none \
     --stop-on-parse-err \
+    --sycl-named-lambda \
     /nbody/src/simulator.cu
 
 sed -i 's/simulator.cuh/simulator.dp.hpp/g' src_sycl/renderer.hpp
