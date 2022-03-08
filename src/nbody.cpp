@@ -74,6 +74,9 @@ int main(int argc, char **argv) {
 
    float last_fps{0};
 
+   int stepCounter{0};
+   float cumStepTime{0.0};
+
    // Main loop
    while (!glfwWindowShouldClose(window) &&
           glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_RELEASE) {
@@ -84,6 +87,13 @@ int main(int argc, char **argv) {
       renderer.render(camera.getProj(width, height), camera.getView());
       renderer.printKernelTime(nbodySim.getLastStepTime());
 
+      auto stepTime = nbodySim.getLastStepTime();
+      stepCounter++;
+      cumStepTime += stepTime;
+
+      std::cout << "At step " << stepCounter << " kernel time is " << stepTime
+                << " and mean is " << cumStepTime / stepCounter << "\n";
+      
       // Window refresh
       glfwSwapBuffers(window);
       glfwPollEvents();
