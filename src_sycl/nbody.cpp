@@ -14,6 +14,8 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+#include <numeric>
+#include <algorithm>
 
 #include "camera.hpp"
 #include "gen.hpp"
@@ -74,8 +76,8 @@ int main(int argc, char **argv) {
 
    float last_fps{0};
 
+   std::vector<float> stepTimes;
    int stepCounter{0};
-   float cumStepTime{0.0};
 
    // Main loop
    while (!glfwWindowShouldClose(window) &&
@@ -87,13 +89,25 @@ int main(int argc, char **argv) {
       renderer.render(camera.getProj(width, height), camera.getView());
       renderer.printKernelTime(nbodySim.getLastStepTime());
 
-      auto stepTime = nbodySim.getLastStepTime();
       stepCounter++;
-      cumStepTime += stepTime;
+      int warmSteps{2};
+      if (stepCounter > warmSteps) {
+         stepTimes.push_back(nbodySim.getLastStepTime());
+         float cumStepTime =
+             std::accumulate(stepTimes.begin(), stepTimes.end(), 0.0);
+         float meanTime = cumStepTime / stepTimes.size();
+         float accum{0.0};
+         std::for_each(stepTimes.begin(), stepTimes.end(),
+                       [&](const float time) {
+                          accum += std::pow((time - meanTime), 2);
+                       });
+         float stdDev = accum / stepTimes.size();
+         std::cout << "At step " << stepCounter << " kernel time is "
+                   << stepTimes.back() << " and mean is "
+                   << cumStepTime / stepTimes.size()
+                   << " and stddev is: " << stdDev << "\n";
+      }
 
-      std::cout << "At step " << stepCounter << " kernel time is " << stepTime
-                << " and mean is " << cumStepTime / stepCounter << "\n";
-      
       // Window refresh
       glfwSwapBuffers(window);
       glfwPollEvents();
