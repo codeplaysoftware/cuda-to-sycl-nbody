@@ -5,9 +5,6 @@
 #include <CL/sycl.hpp>
 #include <dpct/dpct.hpp>
 #include "simulator.dp.hpp"
-#include <oneapi/mkl.hpp>
-#include <oneapi/mkl/rng/device.hpp>
-
 //#include <cstddef>
 #include <stdio.h>
 
@@ -54,14 +51,15 @@ namespace simulation {
             auto vel_d_ct2 = vel_d;
             auto params_ct3 = params;
 
-            cgh.parallel_for(sycl::nd_range<1>(sycl::range<1>(nblocks) *
-                                                   sycl::range<1>(wg_size),
-                                               sycl::range<1>(wg_size)),
-                             [=](sycl::nd_item<1> item_ct1) {
-                                particle_interaction(pos_d_ct0, pos_next_d_ct1,
-                                                     vel_d_ct2, params_ct3,
-                                                     item_ct1);
-                             });
+            cgh.parallel_for<
+                dpct_kernel_name<class particle_interaction_a6ec79>>(
+                sycl::nd_range<1>(
+                    sycl::range<1>(nblocks) * sycl::range<1>(wg_size),
+                    sycl::range<1>(wg_size)),
+                [=](sycl::nd_item<1> item_ct1) {
+                   particle_interaction(pos_d_ct0, pos_next_d_ct1, vel_d_ct2,
+                                        params_ct3, item_ct1);
+                });
          });
          std::swap(pos_d, pos_next_d);
       }
