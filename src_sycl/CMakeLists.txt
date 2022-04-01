@@ -19,7 +19,8 @@ set(OPENGL_SOURCE
 
 add_executable(nbodygl ${COMMON_SOURCE} ${OPENGL_SOURCE})
 
-target_compile_definitions(nbodygl PRIVATE -DUSE_OPENGL)
+# COMPILER_NAME here is only used to print text overlay on simulation
+target_compile_definitions(nbodygl PRIVATE COMPILER_NAME="DPC++")
 
 target_compile_features(nbodygl PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
 

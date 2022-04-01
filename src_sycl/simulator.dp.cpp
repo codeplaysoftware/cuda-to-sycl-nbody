@@ -37,6 +37,27 @@ namespace simulation {
       sendToDevice();
    };
 
+   const std::string* DiskGalaxySimulator::getDeviceName() {
+     // Query the device first time only
+     if(devName.empty()){
+       char devNameHolder[256];
+       /*
+       DPCT1003:4: Migrated API does not return error code. (*, 0) is inserted.
+       You may need to rewrite this code.
+       */
+       int error_id = (memcpy(devNameHolder,
+                              dpct::dev_mgr::instance()
+                                  .get_device(0)
+                                  .get_info<sycl::info::device::name>()
+                                  .c_str(),
+                              256),
+                       0);  // Assume main device
+       if (error_id != 0) devName = "Unknown Device";
+         else devName = devNameHolder;
+     }
+     return &devName;
+   }
+
    void DiskGalaxySimulator::stepSim() {
       // Compute updated positions
       constexpr int wg_size = 256;

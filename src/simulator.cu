@@ -32,6 +32,17 @@ namespace simulation {
       sendToDevice();
    };
 
+   const std::string* DiskGalaxySimulator::getDeviceName() {
+     // Query the device first time only
+     if(devName.empty()){
+       char devNameHolder[256];
+       int error_id = cuDeviceGetName(devNameHolder, 256, 0); // Assume main device
+       if(error_id != CUDA_SUCCESS) devName = "Unknown Device";
+         else devName = devNameHolder;
+     }
+     return &devName;
+   }
+
    void DiskGalaxySimulator::stepSim() {
       // Compute updated positions
       constexpr int wg_size = 256;

@@ -8,6 +8,7 @@
 #include <cuda_runtime_api.h>
 #include <stdio.h>
 
+#include <string>
 #include <vector>
 
 #include "sim_param.hpp"
@@ -110,6 +111,7 @@ namespace simulation {
       virtual const ParticleData &getParticlePos() = 0;
       virtual const ParticleData &getParticleVel() = 0;
       virtual float getLastStepTime() = 0;
+      virtual const std::string* getDeviceName() = 0;
    };
 
    /*
@@ -132,9 +134,11 @@ namespace simulation {
       size_t getNumParticles() { return params.numParticles; }
       const ParticleData &getParticlePos();
       const ParticleData &getParticleVel();
+      const std::string* getDeviceName();
 
      private:
       SimParam params;
+      std::string devName;
       float lastStepTime{0.0};
 
       // Data for particle positions & vel on host
