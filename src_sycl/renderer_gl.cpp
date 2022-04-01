@@ -139,7 +139,9 @@ void RendererGL::printKernelTime(float kernelTime) {
                     ImGuiWindowFlags_NoScrollbar |
                     ImGuiWindowFlags_NoSavedSettings |
                     ImGuiWindowFlags_NoInputs);
-   ImGui::SetWindowFontScale(1.8);
+   ImGui::SetWindowFontScale(2.5);
+   ImGui::Text("%s", (std::string("N-body demo running with " COMPILER_NAME
+                                  " on device: ") + *sim->getDeviceName()).c_str());
    if (PRINT_PSEUDO_FPS) {
       ImGui::Text("FPS: %2.0f", 1000.0/kernelTime);
    } else {

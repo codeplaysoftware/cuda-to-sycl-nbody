@@ -24,10 +24,11 @@ set(OPENGL_SOURCE
 
 add_executable(${BINARY_NAME} ${COMMON_SOURCE} ${OPENGL_SOURCE})
 
-target_compile_definitions(${BINARY_NAME} PRIVATE -DUSE_OPENGL)
+# COMPILER_NAME here is only used to print text overlay on simulation
+target_compile_definitions(${BINARY_NAME} PRIVATE -DUSE_OPENGL COMPILER_NAME="CUDA")
 
 target_compile_features(${BINARY_NAME} PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
 
 target_include_directories(${BINARY_NAME} PRIVATE ${CUDA_INCLUDE_DIRS})
 
-target_link_libraries(${BINARY_NAME} PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL)
+target_link_libraries(${BINARY_NAME} PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL cuda)
