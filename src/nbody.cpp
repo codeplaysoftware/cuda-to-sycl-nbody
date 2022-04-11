@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
                        [&](const float time) {
                           accum += std::pow((time - meanTime), 2);
                        });
-         float stdDev = accum / stepTimes.size();
+         float stdDev = std::pow(accum / stepTimes.size(), 0.5);
          std::cout << "At step " << stepCounter << " kernel time is "
                    << stepTimes.back() << " and mean is "
                    << cumStepTime / stepTimes.size()
