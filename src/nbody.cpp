@@ -75,6 +75,8 @@ int main(int argc, char **argv) {
    float last_fps{0};
 
    // Main loop
+   unsigned int counter = 0;
+   float stepTime = 0.0;
    while (!glfwWindowShouldClose(window) &&
           glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_RELEASE) {
       double frame_start = glfwGetTime();
@@ -82,7 +84,8 @@ int main(int argc, char **argv) {
       nbodySim.stepSim();
       renderer.updateParticles();
       renderer.render(camera.getProj(width, height), camera.getView());
-      renderer.printKernelTime(nbodySim.getLastStepTime());
+      if(!(counter % 20)) stepTime = nbodySim.getLastStepTime();
+      renderer.printKernelTime(stepTime);
 
       // Window refresh
       glfwSwapBuffers(window);
@@ -92,6 +95,7 @@ int main(int argc, char **argv) {
       double frame_end = glfwGetTime();
       double elapsed = frame_end - frame_start;
       last_fps = 1.0 / elapsed;
+      counter++;
    }
    renderer.destroy();
    glfwDestroyWindow(window);
