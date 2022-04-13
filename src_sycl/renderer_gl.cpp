@@ -141,7 +141,7 @@ void RendererGL::printKernelTime(float kernelTime) {
                     ImGuiWindowFlags_NoInputs);
    ImGui::SetWindowFontScale(2.5);
    ImGui::Text("%s", (std::string("N-body demo running with " COMPILER_NAME
-                                  " on device: ") + *sim->getDeviceName()).c_str());
+                                  " on NVIDIA GPU");
    if (PRINT_PSEUDO_FPS) {
       ImGui::Text("FPS: %2.0f", 1000.0/kernelTime);
    } else {
