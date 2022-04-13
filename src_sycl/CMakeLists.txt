@@ -22,7 +22,7 @@ set(OPENGL_SOURCE
 
 add_executable(${BINARY_NAME} ${COMMON_SOURCE} ${OPENGL_SOURCE})
 
-target_compile_definitions(${BINARY_NAME} PRIVATE -DUSE_OPENGL COMPILER_NAME="DPC++")
+target_compile_definitions(${BINARY_NAME} PRIVATE -DUSE_OPENGL COMPILER_NAME="SYCL")
 
 target_compile_features(${BINARY_NAME} PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
 
