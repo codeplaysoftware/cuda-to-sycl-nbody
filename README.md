@@ -11,7 +11,7 @@ This nbody simulation can be run with any of:
  - CUDA
  - DPC++ CUDA backend
  - DPC++ OpenCL CPU backend
- - ComputeCpp Experimental Host Backend
+ - ComputeCpp OpenCL Backend
 
 Source code for the CUDA version is in `./src/` while `./src_sycl/` contains the semi-automatically converted SYCL code.
 
@@ -42,7 +42,7 @@ The DPC++ OpenCL backend requires an [OpenCL runtime](https://intel.github.io/ll
 
 Both DPC++ backends require the [DPC++ compiler](https://intel.github.io/llvm-docs/GetStartedGuide.html) to compile the SYCL code.
 
-The ComputeCpp Experimental Host backend requires the proprietary ComputeCpp binary which you should have received from Codeplay, and an OpenCL runtime.
+The ComputeCpp backend requires ComputeCpp which you can download from the [Codeplay website](https://developer.codeplay.com/home/).
 
 
 ## Building
