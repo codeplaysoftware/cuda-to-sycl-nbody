@@ -92,13 +92,17 @@ will run on a CPU through the OpenCL backend. Note the correspondence between op
      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsycl -fsycl-targets=spir64,nvptx64-nvidia-cuda -fsycl-unnamed-lambda")
 ```
 
-### Selecting the ComputeCpp Host Backend
+### Selecting the ComputeCpp Backend
 
-The experimental ComputeCpp distribution will *only* work with the host backend, and this must be specified with the `COMPUTECPP_TARGET` environment variable:
+By specifying the environment variable `COMPUTECPP_TARGET`, it's possible to switch between running with the OpenCL CPU, OpenCL GPU or the host backends:
 
 ```
 COMPUTECPP_TARGET=host ./nbodygl
+COMPUTECPP_TARGET=cpu ./nbodygl
+COMPUTECPP_TARGET=gpu ./nbodygl
 ```
+
+Note that the ComputeCpp version will only support backends with USM support (Intel GPUs/CPUs).
 
 ### Adapting the project for DPC++ OpenCL
 

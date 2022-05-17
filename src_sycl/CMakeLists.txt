@@ -36,10 +36,7 @@ if(USE_COMPUTECPP)
 
 	set_property(SOURCE simulator.dp.cpp APPEND
         PROPERTY COMPILE_OPTIONS
-		-sycl-driver -std=gnu++17 -O3
-		-mllvm -local_mem_pools=8
-		-mllvm -local_mem_pools_size=5000
-		-march=native -sycl-target host-x86_64)
+		-O3 -march=native)
 
 	target_include_directories(nbodygl PRIVATE
 		${ComputeCpp_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIR})
