@@ -56,7 +56,7 @@ The `parameters` described in this section can all be adjusted via command line 
 
 `./nbodygl numParticles simIterationsPerFrame damping dt distEps G`
 
-Note that `numParicles` specifies the number of particles simulated, divided by blocksize (i.e. setting `numParticles` to 50 produces 50*256 particles). `simIterationsPerFrame` specifies how many steps of the simulation to take before rendering the next frame. For default values for all of these parameters, refer to `sim_param.cpp`.
+Note that `numParticles` specifies the number of particles simulated, divided by blocksize (i.e. setting `numParticles` to 50 produces 50*256 particles). `simIterationsPerFrame` specifies how many steps of the simulation to take before rendering the next frame. For default values for all of these parameters, refer to `sim_param.cpp`.
 
 ### Modifying Simulation Behaviour
 
