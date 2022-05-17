@@ -38,14 +38,6 @@ if(USE_COMPUTECPP)
         PROPERTY COMPILE_OPTIONS
 		-O3 -march=native)
 
-	target_include_directories(nbodygl PRIVATE
-		${ComputeCpp_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIR})
-
-	target_link_libraries(nbodygl PRIVATE ComputeCpp::ComputeCpp)
-
-	target_compile_definitions(nbodygl INTERFACE
-    	SYCL_LANGUAGE_VERSION=${SYCL_LANGUAGE_VERSION})
-
 	add_sycl_to_target(TARGET nbodygl SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/simulator.dp.cpp)
 else()
 
