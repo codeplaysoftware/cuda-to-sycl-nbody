@@ -7,21 +7,37 @@ Forked from https://github.com/salel/nbody
 
 ## Building
 
-Build scripts for both versions (CUDA & SYCL) are located in `./scripts/`
+Build scripts for both versions (CUDA & SYCL) are located in `./scripts/`, & depend on cmake.
 
-Dependencies:
- - cmake
+### Graphics Dependencies
+
+The rendering components of this code depend on:
  - GLM
  - GLFW
  - GLEW
 
-With apt:
+These can be installed with apt:
 ```
 sudo apt update
 sudo apt install libglew-dev libglfw3-dev libglm-dev libxxf86vm-dev libxcursor-dev libxinerama-dev libxi-dev
 ```
 Remember that you need an OpenGL 4.5 ready graphics card. Radeon 7xxx or Geforce GTX 4xx. No OSX. Maybe Intel.
 
+### Simulation Dependencies (CUDA & SYCL)
+
+The CUDA version of this code requires the CUDA runtime to be installed on your machine.
+
+The SYCL version also requires [installation of the CUDA runtime](https://intel.github.io/llvm-docs/GetStartedGuide.html#build-dpc-toolchain-with-support-for-nvidia-cuda) to run using SYCL's CUDA backend, or an [OpenCL runtime](https://intel.github.io/llvm-docs/GetStartedGuide.html#install-low-level-runtime) to run using SYCL's OpenCL backend. Furthermore, the [DPC++ compiler](https://intel.github.io/llvm-docs/GetStartedGuide.html) is required to compile the SYCL code.
+
+The `sycl-ls` tool allows you to check for available backends on the system. For example, on a system with Intel OpenCL CPU runtime & CUDA runtime, the output is:
+
+```
+> sycl-ls
+[opencl:cpu:0] Intel(R) OpenCL, Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz 3.0 [2021.13.11.0.23_160000]
+[opencl:cpu:1] Intel(R) OpenCL, Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz 3.0 [2021.13.11.0.23_160000]
+[cuda:gpu:0] NVIDIA CUDA BACKEND, NVIDIA GeForce RTX 3060 0.0 [CUDA 11.6]
+[host:host:0] SYCL host platform, SYCL host device 1.2 [1.2]
+```
 
 ### Converting CUDA to SYCL
 
@@ -32,6 +48,32 @@ The DPC++ compatibility tool offers options for intercepting complex builds, but
 ### CMake
 
 The option `-DBUILD_SYCL` switches between building the CUDA version & the SYCL version of the code.
+
+## Running on different platforms
+
+By specifying the environment variable SYCL_DEVICE_FILTER, it's possible to switch between running with the CUDA backend and the OpenCL backend. For example:
+
+```
+    SYCL_DEVICE_FILTER=cuda ./nbodygl
+```
+will run on the CUDA backend, whereas:
+```
+    SYCL_DEVICE_FILTER=opencl:cpu ./nbodygl
+```
+will run on a CPU through the OpenCL backend. 
+
+**Note**: this is possible because `CMakeLists.txt` specifies building the SYCL code for both CUDA & OpenCL backends:
+```
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsycl -fsycl-targets=spir64,nvptx64-nvidia-cuda -fsycl-unnamed-lambda")
+```
+
+### Adapting the project for DPC++ OpenCL
+
+No changes to the code were required, but there were a couple of bugs which are worked around.
+
+Firstly, when building for multiple targets (`-fsycl-targets`), there is a [recent bug](https://github.com/intel/llvm/issues/5330) which causes failure to link to static libraries. The workaround for this is to switch from building `imgui` as a static to a shared library.
+
+Secondly, I encountered the common CL header bug (see [here](https://github.com/intel/llvm/issues/2617) and [here](https://github.com/oneapi-src/oneDNN/issues/885)). This turned out to be triggered for the `spir64` backend because the CUDA headers were included *only* via `-I` and not via `-internal-isystem`. This caused them to take precedence over SYCL CL headers. The solution was to not include CUDA headers in `src_sycl/CMakeLists.txt`, which turned out to be unnecessary anyway.
 
 ## Passing data between OpenGL & CUDA/SYCL
 
