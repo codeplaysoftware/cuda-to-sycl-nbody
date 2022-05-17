@@ -38,18 +38,7 @@ if(BACKEND STREQUAL "COMPUTECPP")
 
 	set_property(SOURCE simulator.dp.cpp APPEND
         PROPERTY COMPILE_OPTIONS
-		-sycl-driver -std=gnu++17 -O3
-		-mllvm -local_mem_pools=8
-		-mllvm -local_mem_pools_size=5000
-		-march=native -sycl-target host-x86_64)
-
-	target_include_directories(${BINARY_NAME} PRIVATE 
-		${ComputeCpp_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIR})
-
-	target_link_libraries(${BINARY_NAME} PRIVATE ComputeCpp::ComputeCpp)
-
-	target_compile_definitions(${BINARY_NAME} INTERFACE
-    	SYCL_LANGUAGE_VERSION=${SYCL_LANGUAGE_VERSION})
+		-O3 -march=native)
 
 	add_sycl_to_target(TARGET ${BINARY_NAME} SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/simulator.dp.cpp)
 
