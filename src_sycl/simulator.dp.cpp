@@ -3,7 +3,7 @@
 // For a copy, see https://opensource.org/licenses/MIT.
 
 #include <CL/sycl.hpp>
-#include <dpct/dpct.hpp>
+//#include <dpct/dpct.hpp>
 #include "simulator.dp.hpp"
 //#include <cstddef>
 #include <stdio.h>
@@ -13,6 +13,8 @@
 #include <random>
 #include <tuple>
 #include <chrono>
+
+class particleKernel;
 
 namespace simulation {
 
@@ -24,11 +26,12 @@ namespace simulation {
 
    DiskGalaxySimulator::DiskGalaxySimulator(SimParam params_)
        : params(params_),
+         myQ{{sycl::property::queue::in_order()}},
          pos(params_.numParticles),
          vel(params_.numParticles),
-         pos_d(params_.numParticles),
-         vel_d(params_.numParticles),
-         pos_next_d(params_.numParticles) {
+         pos_d(params_.numParticles, myQ),
+         vel_d(params_.numParticles, myQ),
+         pos_next_d(params_.numParticles, myQ) {
       randomParticlePos();
       initialParticleVel();
       sendToDevice();
@@ -45,21 +48,20 @@ namespace simulation {
       // dpct.
       auto start = std::chrono::steady_clock::now();
       for (size_t i = 0; i < params.simIterationsPerFrame; i++) {
-         dpct::get_default_queue().submit([&](sycl::handler &cgh) {
+         myQ.submit([&](sycl::handler &cgh) {
             auto pos_d_ct0 = pos_d;
             auto pos_next_d_ct1 = pos_next_d;
             auto vel_d_ct2 = vel_d;
             auto params_ct3 = params;
 
-            cgh.parallel_for<
-                dpct_kernel_name<class particle_interaction_a6ec79>>(
-                sycl::nd_range<1>(
-                    sycl::range<1>(nblocks) * sycl::range<1>(wg_size),
-                    sycl::range<1>(wg_size)),
-                [=](sycl::nd_item<1> item_ct1) {
-                   particle_interaction(pos_d_ct0, pos_next_d_ct1, vel_d_ct2,
-                                        params_ct3, item_ct1);
-                });
+            cgh.parallel_for<class particleKernel>(sycl::nd_range<1>(sycl::range<1>(nblocks) *
+                                                   sycl::range<1>(wg_size),
+                                               sycl::range<1>(wg_size)),
+                             [=](sycl::nd_item<1> item_ct1) {
+                                particle_interaction(pos_d_ct0, pos_next_d_ct1,
+                                                     vel_d_ct2, params_ct3,
+                                                     item_ct1);
+                             });
          });
          std::swap(pos_d, pos_next_d);
       }
@@ -67,7 +69,7 @@ namespace simulation {
       DPCT1003:4: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
-      gpuErrchk((dpct::get_current_device().queues_wait_and_throw(), 0));
+      gpuErrchk((myQ.wait_and_throw(), 0));
       auto stop = std::chrono::steady_clock::now();
       lastStepTime =
              std::chrono::duration<float, std::milli>(stop - start)
@@ -80,19 +82,19 @@ namespace simulation {
    // Only necessary because we can't initialize data on device yet, in a
    // dpct-friendly way
    void DiskGalaxySimulator::sendToDevice() {
-   dpct::device_ext &dev_ct1 = dpct::get_current_device();
-   sycl::queue &q_ct1 = dev_ct1.default_queue();
+   // dpct::device_ext &dev_ct1 = dpct::get_current_device();
+   // sycl::queue &q_ct1 = dev_ct1.default_queue();
       /*
       DPCT1003:5: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
-      gpuErrchk((dev_ct1.queues_wait_and_throw(), 0));
+      gpuErrchk((myQ.wait_and_throw(), 0));
 
       /*
       DPCT1003:6: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
-      gpuErrchk((q_ct1
+      gpuErrchk((myQ
                      .memcpy(pos_d.x, pos.x.data(),
                              params.numParticles * sizeof(coords_t))
                      .wait(),
@@ -101,7 +103,7 @@ namespace simulation {
       DPCT1003:7: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
-      gpuErrchk((q_ct1
+      gpuErrchk((myQ
                      .memcpy(pos_d.y, pos.y.data(),
                              params.numParticles * sizeof(coords_t))
                      .wait(),
@@ -110,7 +112,7 @@ namespace simulation {
       DPCT1003:8: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
-      gpuErrchk((q_ct1
+      gpuErrchk((myQ
                      .memcpy(pos_d.z, pos.z.data(),
                              params.numParticles * sizeof(coords_t))
                      .wait(),
@@ -120,7 +122,7 @@ namespace simulation {
       DPCT1003:9: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
-      gpuErrchk((q_ct1
+      gpuErrchk((myQ
                      .memcpy(vel_d.x, vel.x.data(),
                              params.numParticles * sizeof(coords_t))
                      .wait(),
@@ -129,7 +131,7 @@ namespace simulation {
       DPCT1003:10: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
-      gpuErrchk((q_ct1
+      gpuErrchk((myQ
                      .memcpy(vel_d.y, vel.y.data(),
                              params.numParticles * sizeof(coords_t))
                      .wait(),
@@ -138,7 +140,7 @@ namespace simulation {
       DPCT1003:11: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
-      gpuErrchk((q_ct1
+      gpuErrchk((myQ
                      .memcpy(vel_d.z, vel.z.data(),
                              params.numParticles * sizeof(coords_t))
                      .wait(),
@@ -148,29 +150,29 @@ namespace simulation {
       DPCT1003:12: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
-      gpuErrchk((dev_ct1.queues_wait_and_throw(), 0));
+      gpuErrchk((myQ.wait_and_throw(), 0));
    }
 
    // Receive particle positions & velocity from device
    void DiskGalaxySimulator::recvFromDevice() {
-   dpct::device_ext &dev_ct1 = dpct::get_current_device();
-   sycl::queue &q_ct1 = dev_ct1.default_queue();
+   // dpct::device_ext &dev_ct1 = dpct::get_current_device();
+   // sycl::queue &q_ct1 = dev_ct1.default_queue();
       /*
       DPCT1003:13: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
-      gpuErrchk((dev_ct1.queues_wait_and_throw(), 0));
+      gpuErrchk((myQ.wait_and_throw(), 0));
 
       /*
       DPCT1003:14: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
-      gpuErrchk((q_ct1
+      gpuErrchk((myQ
                      .memcpy(pos.x.data(), pos_d.x,
                              params.numParticles * sizeof(coords_t))
                      .wait(),
                  0));
-      gpuErrchk((q_ct1
+      gpuErrchk((myQ
                      .memcpy(pos.y.data(), pos_d.y,
                              params.numParticles * sizeof(coords_t))
                      .wait(),
@@ -179,7 +181,7 @@ namespace simulation {
       DPCT1003:15: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
-      gpuErrchk((q_ct1
+      gpuErrchk((myQ
                      .memcpy(pos.z.data(), pos_d.z,
                              params.numParticles * sizeof(coords_t))
                      .wait(),
@@ -189,7 +191,7 @@ namespace simulation {
       DPCT1003:16: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
-      gpuErrchk((q_ct1
+      gpuErrchk((myQ
                      .memcpy(vel.x.data(), vel_d.x,
                              params.numParticles * sizeof(coords_t))
                      .wait(),
@@ -198,7 +200,7 @@ namespace simulation {
       DPCT1003:17: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
-      gpuErrchk((q_ct1
+      gpuErrchk((myQ
                      .memcpy(vel.y.data(), vel_d.y,
                              params.numParticles * sizeof(coords_t))
                      .wait(),
@@ -207,7 +209,7 @@ namespace simulation {
       DPCT1003:18: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
-      gpuErrchk((q_ct1
+      gpuErrchk((myQ
                      .memcpy(vel.z.data(), vel_d.z,
                              params.numParticles * sizeof(coords_t))
                      .wait(),
@@ -216,7 +218,7 @@ namespace simulation {
       DPCT1003:19: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
-      gpuErrchk((dev_ct1.queues_wait_and_throw(), 0));
+      gpuErrchk((myQ.wait_and_throw(), 0));
    }
 
    void DiskGalaxySimulator::randomParticlePos() {
