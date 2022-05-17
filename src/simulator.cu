@@ -4,7 +4,6 @@
 
 #include "simulator.cuh"
 //#include <cstddef>
-#include <curand_kernel.h>
 #include <stdio.h>
 
 #include <algorithm>
