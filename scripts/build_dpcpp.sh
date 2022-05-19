@@ -4,7 +4,7 @@
 # This work is licensed under the terms of the MIT license.
 # For a copy, see https://opensource.org/licenses/MIT.
 
-BUILD_DIR="build_sycl"
+BUILD_DIR="build_dpcpp"
 
 rm -rf $BUILD_DIR
 mkdir $BUILD_DIR
@@ -14,6 +14,6 @@ CXX=clang++ \
 CC=clang \
 cmake ../ \
 -DGLEW_LIBRARY=/usr/lib/x86_64-linux-gnu/libGLEW.so \
--DBUILD_SYCL=on || exit
+-DBACKEND=DPCPP -DDPCPP_CUDA_SUPPORT=on || exit
 
 make

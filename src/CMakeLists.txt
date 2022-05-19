@@ -22,13 +22,12 @@ set(OPENGL_SOURCE
 	renderer_gl.cpp 
 	shader.cpp)
 
-add_executable(nbodygl ${COMMON_SOURCE} ${OPENGL_SOURCE})
+add_executable(${BINARY_NAME} ${COMMON_SOURCE} ${OPENGL_SOURCE})
 
-target_compile_definitions(nbodygl PRIVATE -DUSE_OPENGL)
+target_compile_definitions(${BINARY_NAME} PRIVATE -DUSE_OPENGL)
 
-target_compile_features(nbodygl PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
+target_compile_features(${BINARY_NAME} PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
 
-target_include_directories(nbodygl PRIVATE 
-    ${CUDA_INCLUDE_DIRS})
+target_include_directories(${BINARY_NAME} PRIVATE ${CUDA_INCLUDE_DIRS})
 
-target_link_libraries(nbodygl PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL)
+target_link_libraries(${BINARY_NAME} PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL)

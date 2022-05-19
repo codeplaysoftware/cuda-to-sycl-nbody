@@ -1,3 +1,6 @@
+# Copyright (C) 2016 - 2018 Sarah Le Luron
+# Copyright (C) 2022 Codeplay Software Limited
+
 find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(Glew REQUIRED IMPORTED_TARGET glew)
@@ -17,19 +20,18 @@ set(OPENGL_SOURCE
 	renderer_gl.cpp 
 	shader.cpp)
 
-add_executable(nbodygl ${COMMON_SOURCE} ${OPENGL_SOURCE})
+add_executable(${BINARY_NAME} ${COMMON_SOURCE} ${OPENGL_SOURCE})
 
-target_compile_definitions(nbodygl PRIVATE -DUSE_OPENGL)
+target_compile_definitions(${BINARY_NAME} PRIVATE -DUSE_OPENGL)
 
-target_compile_features(nbodygl PRIVATE cxx_auto_type cxx_nullptr cxx_range_for cxx_std_17)
+target_compile_features(${BINARY_NAME} PRIVATE cxx_auto_type cxx_nullptr cxx_range_for cxx_std_17)
 
-target_include_directories(nbodygl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(${BINARY_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_link_libraries(nbodygl PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL)
+target_link_libraries(${BINARY_NAME} PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL)
 
-option(USE_COMPUTECPP "whether to use ComputeCpp compiler" OFF)
+if(BACKEND STREQUAL "COMPUTECPP")
 
-if(USE_COMPUTECPP)
 	find_package(ComputeCpp REQUIRED)
 
 	set(CMAKE_CXX_COMPILER ${ComputeCpp_DEVICE_COMPILER_EXECUTABLE})
@@ -38,15 +40,23 @@ if(USE_COMPUTECPP)
         PROPERTY COMPILE_OPTIONS
 		-O3 -march=native)
 
-	add_sycl_to_target(TARGET nbodygl SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/simulator.dp.cpp)
-else()
+	add_sycl_to_target(TARGET ${BINARY_NAME} SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/simulator.dp.cpp)
+
+else() #DPCPP
 
 	if(NOT ((CMAKE_CXX_COMPILER MATCHES ".*dpcpp(\\.exe)?$") OR
                 (CMAKE_CXX_COMPILER MATCHES ".*clang\\+\\+(\\.exe)?$")))
 		message( FATAL_ERROR "Invalid C++ compiler for SYCL compilation" )
 	endif()
 
-	set(SYCL_FLAGS -fsycl -fsycl-targets=spir64,nvptx64-nvidia-cuda -fsycl-unnamed-lambda)
-	target_compile_options(nbodygl PRIVATE ${SYCL_FLAGS})
-	target_link_options(nbodygl PRIVATE ${SYCL_FLAGS})
+	option(DPCPP_CUDA_SUPPORT "on")
+	if(DPCPP_CUDA_SUPPORT)
+		set(SYCL_FLAGS -fsycl -fsycl-targets=spir64,nvptx64-nvidia-cuda -fsycl-unnamed-lambda)
+	else()
+		set(SYCL_FLAGS -fsycl -fsycl-targets=spir64 -fsycl-unnamed-lambda)
+	endif()
+
+	target_compile_options(${BINARY_NAME} PRIVATE ${SYCL_FLAGS})
+	target_link_options(${BINARY_NAME} PRIVATE ${SYCL_FLAGS})
+
 endif()
