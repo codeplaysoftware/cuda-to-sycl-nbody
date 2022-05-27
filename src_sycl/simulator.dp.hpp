@@ -5,7 +5,7 @@
 #pragma once
 
 #include <CL/sycl.hpp>
-//#include <dpct/dpct.hpp>
+#include <dpct/dpct.hpp>
 #include <stdio.h>
 
 #include <vector>
@@ -82,7 +82,9 @@ namespace simulation {
       coords_t *y = nullptr;
       coords_t *z = nullptr;
 
-      ParticleData_d(size_t n, sycl::queue q_ct1) {
+      ParticleData_d(size_t n) {
+   dpct::device_ext &dev_ct1 = dpct::get_current_device();
+   sycl::queue &q_ct1 = dev_ct1.default_queue();
          // Allocate device memory for particle coords & velocity...
          /*
          DPCT1003:1: Migrated API does not return error code. (*, 0) is
@@ -145,8 +147,6 @@ namespace simulation {
      private:
       SimParam params;
       float lastStepTime{0.0};
-
-      sycl::queue myQ;
 
       // Data for particle positions & vel on host
       ParticleData pos;
