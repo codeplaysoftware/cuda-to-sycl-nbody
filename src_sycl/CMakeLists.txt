@@ -38,7 +38,7 @@ if(BACKEND STREQUAL "COMPUTECPP")
 
 	set_property(TARGET ${BINARY_NAME} APPEND
         PROPERTY COMPILE_OPTIONS
-		-std=c++17 -fsycl-enable-usm)
+		-std=c++17 -sycl-std=2020)
 
 	set_property(SOURCE simulator.dp.cpp APPEND
         PROPERTY COMPILE_OPTIONS
