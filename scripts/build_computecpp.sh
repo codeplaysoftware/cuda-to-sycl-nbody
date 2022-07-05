@@ -14,6 +14,6 @@ cmake ../ \
 	-DGLEW_LIBRARY=/usr/lib/x86_64-linux-gnu/libGLEW.so \
 	-DBACKEND="COMPUTECPP" \
 	-DComputeCpp_DIR=$HOME/sources/ComputeCpp \
-	-DSYCL_LANGUAGE_VERSION=2020 || exit
+	-DSYCL_LANGUAGE_VERSION=202003 || exit
 
 make

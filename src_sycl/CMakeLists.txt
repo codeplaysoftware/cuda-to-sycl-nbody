@@ -24,7 +24,7 @@ add_executable(${BINARY_NAME} ${COMMON_SOURCE} ${OPENGL_SOURCE})
 
 target_compile_definitions(${BINARY_NAME} PRIVATE -DUSE_OPENGL)
 
-target_compile_features(${BINARY_NAME} PRIVATE cxx_auto_type cxx_nullptr cxx_range_for cxx_std_17)
+target_compile_features(${BINARY_NAME} PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
 
 target_include_directories(${BINARY_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
@@ -35,6 +35,15 @@ if(BACKEND STREQUAL "COMPUTECPP")
 	find_package(ComputeCpp REQUIRED)
 
 	set(CMAKE_CXX_COMPILER ${ComputeCpp_DEVICE_COMPILER_EXECUTABLE})
+
+	set_property(TARGET ${BINARY_NAME} APPEND
+		PROPERTY COMPILE_OPTIONS
+		-sycl-std=2020)
+
+	set_target_properties(${BINARY_NAME} 
+		PROPERTIES CXX_STANDARD 17
+		CXX_STANDARD_REQUIRED ON
+		CXX_EXTENSIONS OFF)
 
 	set_property(SOURCE simulator.dp.cpp APPEND
         PROPERTY COMPILE_OPTIONS
