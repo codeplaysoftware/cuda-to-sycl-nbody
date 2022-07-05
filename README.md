@@ -42,7 +42,7 @@ The DPC++ OpenCL backend requires an [OpenCL runtime](https://intel.github.io/ll
 
 Both DPC++ backends require the [DPC++ compiler](https://intel.github.io/llvm-docs/GetStartedGuide.html) to compile the SYCL code.
 
-The ComputeCpp backend requires ComputeCpp which you can download from the [Codeplay website](https://developer.codeplay.com/home/).
+The ComputeCpp backend requires the new Experimental version of the ComputeCpp compiler, which you can download from the [Codeplay website](https://developer.codeplay.com/products/computecpp/ce/download?experimental=true).
 
 
 ## Building
