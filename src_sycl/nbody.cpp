@@ -107,7 +107,6 @@ int main(int argc, char **argv) {
                    << cumStepTime / stepTimes.size()
                    << " and stddev is: " << stdDev << "\n";
       }
-
       // Window refresh
       glfwSwapBuffers(window);
       glfwPollEvents();

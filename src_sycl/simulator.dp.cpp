@@ -52,7 +52,7 @@ namespace simulation {
             auto params_ct3 = params;
 
             cgh.parallel_for<
-                dpct_kernel_name<class particle_interaction_a6ec79>>(
+                dpct_kernel_name<class particle_interaction_18c029>>(
                 sycl::nd_range<1>(
                     sycl::range<1>(nblocks) * sycl::range<1>(wg_size),
                     sycl::range<1>(wg_size)),
@@ -279,10 +279,10 @@ namespace simulation {
                                         ParticleData_d pVel, SimParam params,
                                         sycl::nd_item<1> item_ct1) {
       int id = item_ct1.get_local_id(0) +
-               (item_ct1.get_group(0) * item_ct1.get_local_range().get(0));
+               (item_ct1.get_group(0) * item_ct1.get_local_range(0));
       if (id >= params.numParticles) return;
 
-      vec3 force(0.0, 0.0, 0.0);
+      vec3 force(0.0f, 0.0f, 0.0f);
       vec3 pos(pPos.x[id], pPos.y[id], pPos.z[id]);
 
       for (int i = 0; i < params.numParticles; i++) {
@@ -291,17 +291,12 @@ namespace simulation {
          vec3 r = other_pos - pos;
          // Fast computation of 1/(|r|^3)
          coords_t dist_sqr = dot(r, r) + params.distEps;
-         /*
-         DPCT1013:20: The rounding mode could not be specified and the generated
-         code may have different precision then the original code. Verify the
-         correctness. SYCL math built-ins rounding mode is aligned with OpenCL
-         C 1.2 standard.
-         */
-         coords_t inv_dist_cube = sycl::rsqrt(dist_sqr * dist_sqr * dist_sqr);
+         coords_t inv_dist_cube =
+             sycl::rsqrt((double)dist_sqr * dist_sqr * dist_sqr);
 
          // assume uniform unit mass
          /*
-         DPCT1084:21: The function call has multiple migration results in
+         DPCT1084:20: The function call has multiple migration results in
          different template instantiations that could not be unified. You may
          need to adjust the code.
          */
@@ -312,7 +307,7 @@ namespace simulation {
       vec3 curr_vel(pVel.x[id], pVel.y[id], pVel.z[id]);
       curr_vel *= params.damping;
       /*
-      DPCT1084:22: The function call has multiple migration results in different
+      DPCT1084:21: The function call has multiple migration results in different
       template instantiations that could not be unified. You may need to adjust
       the code.
       */
@@ -326,7 +321,7 @@ namespace simulation {
       vec3 curr_pos(pPos.x[id], pPos.y[id], pPos.z[id]);
 
       /*
-      DPCT1084:23: The function call has multiple migration results in different
+      DPCT1084:22: The function call has multiple migration results in different
       template instantiations that could not be unified. You may need to adjust
       the code.
       */

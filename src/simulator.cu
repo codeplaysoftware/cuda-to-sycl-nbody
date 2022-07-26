@@ -171,7 +171,7 @@ namespace simulation {
       int id = threadIdx.x + (blockIdx.x * blockDim.x);
       if (id >= params.numParticles) return;
 
-      vec3 force(0.0, 0.0, 0.0);
+      vec3 force(0.0f, 0.0f, 0.0f);
       vec3 pos(pPos.x[id], pPos.y[id], pPos.z[id]);
 
       for (int i = 0; i < params.numParticles; i++) {
@@ -180,7 +180,7 @@ namespace simulation {
          vec3 r = other_pos - pos;
          // Fast computation of 1/(|r|^3)
          coords_t dist_sqr = dot(r, r) + params.distEps;
-         coords_t inv_dist_cube = __frsqrt_rn(dist_sqr * dist_sqr * dist_sqr);
+         coords_t inv_dist_cube = rsqrt(dist_sqr * dist_sqr * dist_sqr);
 
          // assume uniform unit mass
          force += r * inv_dist_cube;
