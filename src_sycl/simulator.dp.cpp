@@ -285,6 +285,7 @@ namespace simulation {
       vec3 force(0.0f, 0.0f, 0.0f);
       vec3 pos(pPos.x[id], pPos.y[id], pPos.z[id]);
 
+      #pragma unroll 32
       for (int i = 0; i < params.numParticles; i++) {
          if (i == id) continue;
          vec3 other_pos{pPos.x[i], pPos.y[i], pPos.z[i]};
