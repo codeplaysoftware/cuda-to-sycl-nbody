@@ -292,7 +292,7 @@ namespace simulation {
          // Fast computation of 1/(|r|^3)
          coords_t dist_sqr = dot(r, r) + params.distEps;
          coords_t inv_dist_cube =
-             sycl::rsqrt((double)dist_sqr * dist_sqr * dist_sqr);
+             sycl::rsqrt(dist_sqr * dist_sqr * dist_sqr);
 
          // assume uniform unit mass
          /*
