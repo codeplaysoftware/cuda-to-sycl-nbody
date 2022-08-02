@@ -207,4 +207,26 @@ A significant portion of the rendering time is the bloom filter. The [bloom](#Bl
 
 ## SYCL vs. CUDA performance
 
-This actually runs faster on SYCL after `dpct` than it does on CUDA. For 4 steps of the physical simulation (1 rendered frame), CUDA takes ~8.14ms whereas SYCL takes ~5.51ms (RTX 3060).
+This repo previously reported *faster* performance from SYCL than CUDA, but this was due to an erroneous translation in DPCT from `__frsqrt_rn` to `sycl::rsqrt`. The former has higher precision and runs slower than the latter. This has now been rectified so that the original CUDA code calls `rsqrt`.
+
+With this bug rectified, and without any further modification to the CUDA code or dpct-generated SYCL code, the SYCL code is considerably slower because DPCT inserts a cast to double in the rsqrt call:
+
+```
+         coords_t inv_dist_cube =
+             sycl::rsqrt((double)dist_sqr * dist_sqr * dist_sqr);
+
+```
+
+This is presumably because DPCT is unsure of the equivalence of `rsqrt` and `sycl::rsqrt`. However, inspecting PTX reveals that the generated instructions are the same, so the cast to double is unnecessary. Removing the cast to double leaves a 40% performance gap between CUDA and SYCL.
+
+The root cause of this 40% performance gap appears to be different handling of the branch instruction:
+
+```
+if (i == id) continue;
+```
+in the main loop in simulation.dp.cpp. Whereas NVCC handles this via instruction predication, DPC++ generates branch & sync instructions. By replacing this branch instruction with an arithemtic:
+
+```
+force += r * inv_dist_cube * (i != id);
+```
+in both the CUDA & SYCL code, we get the same performance between the two. For 5 steps of the physical simulation (1 rendered frame) with 12,800 particles, both CUDA and SYCL take ~5.05ms (RTX 3060).
