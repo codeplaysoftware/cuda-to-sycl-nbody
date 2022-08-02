@@ -285,15 +285,14 @@ namespace simulation {
       vec3 force(0.0f, 0.0f, 0.0f);
       vec3 pos(pPos.x[id], pPos.y[id], pPos.z[id]);
 
-      #pragma unroll 32
+      #pragma unroll 4
       for (int i = 0; i < params.numParticles; i++) {
-         if (i == id) continue;
          vec3 other_pos{pPos.x[i], pPos.y[i], pPos.z[i]};
          vec3 r = other_pos - pos;
          // Fast computation of 1/(|r|^3)
          coords_t dist_sqr = dot(r, r) + params.distEps;
          coords_t inv_dist_cube =
-             sycl::rsqrt(dist_sqr * dist_sqr * dist_sqr);
+             sycl::rsqrt((double)dist_sqr * dist_sqr * dist_sqr);
 
          // assume uniform unit mass
          /*
@@ -301,7 +300,7 @@ namespace simulation {
          different template instantiations that could not be unified. You may
          need to adjust the code.
          */
-         force += r * inv_dist_cube;
+         force += r * inv_dist_cube * (i != id);
       }
 
       // Update velocity
