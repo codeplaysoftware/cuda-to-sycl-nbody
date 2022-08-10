@@ -9,3 +9,10 @@ settings.json
 *mp4
 lib/**cpp
 lib/**h
+*fatbin*
+*.ptx
+log*
+.vscode
+nbody_dpcpp
+nbody_cuda
+nbody_computecpp
