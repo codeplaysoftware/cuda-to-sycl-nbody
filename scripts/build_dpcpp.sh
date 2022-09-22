@@ -15,5 +15,5 @@ CC=clang \
 cmake ../ \
 -DGLEW_LIBRARY=/usr/lib/x86_64-linux-gnu/libGLEW.so \
 -DBACKEND=DPCPP -DDPCPP_CUDA_SUPPORT=on || exit
-
+#-DPRINT_KERNEL_TIME=off
 make

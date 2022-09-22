@@ -13,5 +13,5 @@ cd $BUILD_DIR || exit
 cmake ../ \
 -DGLEW_LIBRARY=/usr/lib/x86_64-linux-gnu/libGLEW.so \
 -DCMAKE_EXPORT_COMPILE_COMMANDS=on || exit
-
+#-DPRINT_KERNEL_TIME=off
 make
