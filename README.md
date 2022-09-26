@@ -229,4 +229,4 @@ in the main loop in simulation.dp.cpp. Whereas NVCC handles this via instruction
 ```
 force += r * inv_dist_cube * (i != id);
 ```
-in both the CUDA & SYCL code, we get the same performance between the two. For 5 steps of the physical simulation (1 rendered frame) with 12,800 particles, both CUDA and SYCL take ~5.05ms (RTX 3060).
+in both the CUDA & SYCL code, we get comparable performance between the two using our hardware set up (RTX 3060). For 5 steps of the physical simulation (1 rendered frame) with 12,800 particles, both CUDA and SYCL take ~5.05ms (RTX 3060).
