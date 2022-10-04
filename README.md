@@ -53,11 +53,11 @@ The CMake option `-DBACKEND` allows to select which backend ("CUDA", "DPCPP", or
 
 The DPC++ backend, in turn, supports both an OpenCL & CUDA backend, both of which are built by default. If you are building on a machine without CUDA support, you can switch off the DPC++ CUDA backend with the flag `-DDPCPP_CUDA_SUPPORT=off`.
 
-## Converting CUDA to SYCL
+## Migrating CUDA to SYCL
 
-The script `./scripts/run_dpct.sh` calls a containerized version of the DPC++ Compatibility Tool to automatically convert the CUDA components of this project into SYCL. A docker container was used because the dev machine has an incompatible version of the CUDA driver. This should be adapted based on your environment. 
+The script `./scripts/run_dpct.sh` calls a containerized version of the Intel® DPC++ Compatibility Tool to automatically convert the CUDA components of this project into SYCL. A docker container was used because the dev machine has an incompatible version of the CUDA driver. This should be adapted based on your environment. 
 
-The DPC++ compatibility tool offers options for intercepting complex builds, but current dev environment restrictions require me to run dpct inside a docker container. This complicates things, so for now I'm just doing single source conversion on the simulator.cu file.
+The Intel® DPC++ compatibility tool offers options for intercepting complex builds, but current dev environment restrictions require me to run the tool inside a docker container. This complicates things, so for now I'm just doing single source conversion on the simulator.cu file.
 
 ## Running on different platforms
 
@@ -123,7 +123,7 @@ Secondly, I encountered the common CL header bug (see [here](https://github.com/
 
 ## Passing data between OpenGL & CUDA/SYCL
 
-OpenGL & CUDA are capable of interoperating to share device memory, but this will not play well with the DPC++ Compatibility Tool. Instead, computed particle positions are migrated back to the host by CUDA/SYCL, then sent *back* to OpenGL via mapping.
+OpenGL & CUDA are capable of interoperating to share device memory, but this will not play well with the Intel® DPC++ Compatibility Tool. Instead, computed particle positions are migrated back to the host by CUDA/SYCL, then sent *back* to OpenGL via mapping.
 
 
 ## Simulation
@@ -207,9 +207,9 @@ A significant portion of the rendering time is the bloom filter. The [bloom](#Bl
 
 ## SYCL vs. CUDA performance
 
-This repo previously reported *faster* performance from SYCL than CUDA, but this was due to an erroneous translation in DPCT from `__frsqrt_rn` to `sycl::rsqrt`. The former has higher precision and runs slower than the latter. This has now been rectified so that the original CUDA code calls `rsqrt`.
+This repo previously reported *faster* performance from SYCL than CUDA, but this was due to an erroneous translation in the Intel® DPC++ Compatibility Tool from `__frsqrt_rn` to `sycl::rsqrt`. The former has higher precision and runs slower than the latter. This has now been rectified so that the original CUDA code calls `rsqrt`.
 
-With this bug rectified, and without any further modification to the CUDA code or dpct-generated SYCL code, the SYCL code is considerably slower because DPCT inserts a cast to double in the rsqrt call:
+With this bug rectified, and without any further modification to the CUDA code or migrated SYCL code, the SYCL code is considerably slower because the Intel® DPC++ Compatibility Tool inserts a cast to double in the rsqrt call:
 
 ```
          coords_t inv_dist_cube =
@@ -217,7 +217,7 @@ With this bug rectified, and without any further modification to the CUDA code o
 
 ```
 
-This is presumably because DPCT is unsure of the equivalence of `rsqrt` and `sycl::rsqrt`. However, inspecting PTX reveals that the generated instructions are the same, so the cast to double is unnecessary. Removing the cast to double leaves a 40% performance gap between CUDA and SYCL.
+This is presumably because the tool is unsure of the equivalence of `rsqrt` and `sycl::rsqrt`. However, inspecting PTX reveals that the generated instructions are the same, so the cast to double is unnecessary. Removing the cast to double leaves a 40% performance gap between CUDA and SYCL.
 
 The root cause of this 40% performance gap appears to be different handling of the branch instruction:
 
