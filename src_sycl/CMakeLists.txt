@@ -64,7 +64,7 @@ else() #DPCPP
                   -Xsycl-target-frontend=nvptx64-nvidia-cuda -O3
                   -ffast-math
                   -ffp-contract=fast
-                  -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=sm_86)
+                  -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=sm_80)
 	else()
 		set(SYCL_FLAGS -fsycl -fsycl-targets=spir64 -fsycl-unnamed-lambda)
 	endif()
