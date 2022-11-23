@@ -22,7 +22,7 @@ shift 2;
 
 case "$backend" in
     cuda) ./nbody_cuda "$@";;
-    dpcpp) SYCL_DEVICE_FILTER=opencl:cpu ./nbody_dpcpp "$@";;
+    dpcpp) SYCL_DEVICE_FILTER=cuda ./nbody_dpcpp_no_gui "$@";;
     computecpp) COMPUTECPP_TARGET=host ./nbody_computecpp "$@";;
     *) echo "Bad backend"; exit 1;;
 esac
