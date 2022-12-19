@@ -9,6 +9,7 @@ SimParam::SimParam() {
    G = 2.0;
    dt = 0.005;
    numParticles = 50 * 256;
+   numFrames = SIZE_MAX;
    simIterationsPerFrame = 4;
    damping = 0.999998;
    distEps = 1.0e-7;
@@ -32,5 +33,8 @@ void SimParam::parseArgs(int argc, char **argv) {
 
    // Sixth argument if existing = G (gravity) parameter
    if (argc >= 7) G = atof(argv[6]);
+
+   // Seventh argument if existing = number of frames to simulate
+   if (argc >= 8) numFrames = atof(argv[7]);
 
 }
