@@ -70,13 +70,10 @@ else() #DPCPP
 		endif()
 		set(SYCL_FLAGS -fsycl
                   -fsycl-targets=spir64,nvptx64-nvidia-cuda
+                  -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=sm_${CUDA_COMPUTE_CAPABILITY}
                   -fsycl-unnamed-lambda
-                  -O3
-                  -Xsycl-target-frontend=nvptx64-nvidia-cuda -fgpu-inline-threshold=100000
-                  -Xsycl-target-frontend=nvptx64-nvidia-cuda -O3
-                  -ffast-math
-                  -ffp-contract=fast
-                  -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=sm_${CUDA_COMPUTE_CAPABILITY})
+                  -fgpu-inline-threshold=100000
+                  -Ofast)
 	else()
 		set(SYCL_FLAGS -fsycl -fsycl-targets=spir64 -fsycl-unnamed-lambda)
 	endif()
