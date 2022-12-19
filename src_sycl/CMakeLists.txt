@@ -54,6 +54,7 @@ if(BACKEND STREQUAL "COMPUTECPP")
 else() #DPCPP
 
 	if(NOT ((CMAKE_CXX_COMPILER MATCHES ".*dpcpp(\\.exe)?$") OR
+                (CMAKE_CXX_COMPILER MATCHES ".*icpx(\\.exe)?$")  OR
                 (CMAKE_CXX_COMPILER MATCHES ".*clang\\+\\+(\\.exe)?$")))
 		message( FATAL_ERROR "Invalid C++ compiler for SYCL compilation" )
 	endif()
