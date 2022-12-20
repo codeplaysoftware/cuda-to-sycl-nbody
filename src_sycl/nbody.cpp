@@ -106,8 +106,7 @@ int main(int argc, char **argv) {
                        });
          float stdDev = std::pow(accum / stepTimes.size(), 0.5);
          std::cout << "At step " << step << " kernel time is "
-                   << stepTimes.back() << " and mean is "
-                   << cumStepTime / stepTimes.size()
+                   << stepTimes.back() << " and mean is " << meanTime
                    << " and stddev is: " << stdDev << "\n";
       }
       // Window refresh
