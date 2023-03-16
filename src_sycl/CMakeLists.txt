@@ -60,6 +60,14 @@ else() #DPCPP
 
 	option(DPCPP_CUDA_SUPPORT "on")
 	if(DPCPP_CUDA_SUPPORT)
+		set(DEFAULT_CUDA_COMPUTE_CAPABILITY "86")
+		execute_process(
+			COMMAND bash -c "which nvidia-smi >/dev/null && nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -n 1 | tr -d '.'"
+			OUTPUT_VARIABLE CUDA_COMPUTE_CAPABILITY
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+		if ("${CUDA_COMPUTE_CAPABILITY}" STREQUAL "")
+			set(CUDA_COMPUTE_CAPABILITY ${DEFAULT_CUDA_COMPUTE_CAPABILITY})
+		endif()
 		set(SYCL_FLAGS -fsycl
                   -fsycl-targets=spir64,nvptx64-nvidia-cuda
                   -fsycl-unnamed-lambda
@@ -68,7 +76,7 @@ else() #DPCPP
                   -Xsycl-target-frontend=nvptx64-nvidia-cuda -O3
                   -ffast-math
                   -ffp-contract=fast
-                  -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=sm_86)
+                  -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=sm_${CUDA_COMPUTE_CAPABILITY})
 	else()
 		set(SYCL_FLAGS -fsycl -fsycl-targets=spir64 -fsycl-unnamed-lambda)
 	endif()
