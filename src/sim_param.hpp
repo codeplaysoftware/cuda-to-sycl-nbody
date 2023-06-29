@@ -25,6 +25,7 @@ class SimParam {
    float G;                    ///< Gravitational parameter
    float dt;                   ///< Simulation delta t
    size_t numParticles;        ///< Number of particles simulated
+   size_t numFrames;           ///< Number of frames simulated
    int simIterationsPerFrame;  ///< Simulation iterations per frame rendered
    float damping;  ///< Damping parameter for simulating 'soupy' galaxy (1.0 =
                    ///< no damping)

@@ -77,24 +77,24 @@ int main(int argc, char **argv) {
    float last_fps{0};
 
    std::vector<float> stepTimes;
-   int stepCounter{0};
+   int step{0};
 
    // Main loop
-   unsigned int counter = 0;
    float stepTime = 0.0;
    while (!glfwWindowShouldClose(window) &&
-          glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_RELEASE) {
+          glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_RELEASE &&
+          step < params.numFrames) {
       double frame_start = glfwGetTime();
 
       nbodySim.stepSim();
       renderer.updateParticles();
       renderer.render(camera.getProj(width, height), camera.getView());
-      if(!(counter % 20)) stepTime = nbodySim.getLastStepTime();
+      if(!(step % 20)) stepTime = nbodySim.getLastStepTime();
       renderer.printKernelTime(stepTime);
 
-      stepCounter++;
+      step++;
       int warmSteps{2};
-      if (stepCounter > warmSteps) {
+      if (step > warmSteps) {
          stepTimes.push_back(nbodySim.getLastStepTime());
          float cumStepTime =
              std::accumulate(stepTimes.begin(), stepTimes.end(), 0.0);
@@ -105,9 +105,8 @@ int main(int argc, char **argv) {
                           accum += std::pow((time - meanTime), 2);
                        });
          float stdDev = std::pow(accum / stepTimes.size(), 0.5);
-         std::cout << "At step " << stepCounter << " kernel time is "
-                   << stepTimes.back() << " and mean is "
-                   << cumStepTime / stepTimes.size()
+         std::cout << "At step " << step << " kernel time is "
+                   << stepTimes.back() << " and mean is " << meanTime
                    << " and stddev is: " << stdDev << "\n";
       }
       // Window refresh
@@ -118,7 +117,6 @@ int main(int argc, char **argv) {
       double frame_end = glfwGetTime();
       double elapsed = frame_end - frame_start;
       last_fps = 1.0 / elapsed;
-      counter++;
    }
    renderer.destroy();
    glfwDestroyWindow(window);

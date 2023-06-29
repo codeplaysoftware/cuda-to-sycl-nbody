@@ -175,21 +175,12 @@ public:
     prop.set_minor_version(minor);
 
     prop.set_max_work_item_sizes(
-        get_info<cl::sycl::info::device::max_work_item_sizes>());
+        get_info<cl::sycl::info::device::max_work_item_sizes<3>>());
     prop.set_host_unified_memory(
-        get_info<cl::sycl::info::device::host_unified_memory>());
+        has(cl::sycl::aspect::usm_host_allocations));
 
-    // max_clock_frequency parameter is not supported on host device
-    if (is_host()) {
-      // This code may need to be updated. Currently max_clock_frequency for
-      // host device is initialized with 1, in assumption that if other devices
-      // exist and they are being selected based on this parameter, other
-      // devices would have higher priority.
-      prop.set_max_clock_frequency(1);
-    } else {
-      prop.set_max_clock_frequency(
-          get_info<cl::sycl::info::device::max_clock_frequency>());
-    }
+    prop.set_max_clock_frequency(
+        get_info<cl::sycl::info::device::max_clock_frequency>());
 
     prop.set_max_compute_units(
         get_info<cl::sycl::info::device::max_compute_units>());
@@ -387,7 +378,7 @@ private:
   mutable std::mutex m_mutex;
   dev_mgr() {
     cl::sycl::device default_device =
-        cl::sycl::device(cl::sycl::default_selector{});
+        cl::sycl::device(cl::sycl::default_selector_v);
     _devs.push_back(std::make_shared<device_ext>(default_device));
 
     std::vector<cl::sycl::device> sycl_all_devs =
