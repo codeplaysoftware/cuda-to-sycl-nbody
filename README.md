@@ -142,9 +142,9 @@ A drag factor (`damping`) is used to regulate the velocity. At each timestep, th
 
 The `parameters` described in this section can all be adjusted via command line arguments, as follows:
 
-`./nbody_cuda numParticles simIterationsPerFrame damping dt distEps G`
+`./nbody_cuda numParticles simIterationsPerFrame damping dt distEps G numFrames`
 
-Note that `numParticles` specifies the number of particles simulated, divided by blocksize (i.e. setting `numParticles` to 50 produces 50*256 particles). `simIterationsPerFrame` specifies how many steps of the simulation to take before rendering the next frame. For default values for all of these parameters, refer to `sim_param.cpp`.
+Note that `numParticles` specifies the number of particles simulated, divided by blocksize (i.e. setting `numParticles` to 50 produces 50*256 particles). `simIterationsPerFrame` specifies how many steps of the simulation to take before rendering the next frame and `numFrames` specifies the total number of simulation steps before the program exits. For default values for all of these parameters, refer to `sim_param.cpp`.
 
 ### Modifying Simulation Behaviour
 
@@ -209,7 +209,7 @@ A significant portion of the rendering time is the bloom filter. The [bloom](#Bl
 
 This repo previously reported *faster* performance from SYCL than CUDA, but this was due to an erroneous translation in the Intel® DPC++ Compatibility Tool from `__frsqrt_rn` to `sycl::rsqrt`. The former has higher precision and runs slower than the latter. This has now been rectified so that the original CUDA code calls `rsqrt`.
 
-With this bug rectified, and without any further modification to the CUDA code or migrated SYCL code, the SYCL code is considerably slower because the Intel® DPC++ Compatibility Tool inserts a cast to double in the rsqrt call:
+With this bug rectified, and without any further modification to the CUDA code or migrated SYCL code, the SYCL code used to be considerably slower because the Intel® DPC++ Compatibility Tool used to insert a cast to double in the rsqrt call:
 
 ```
          coords_t inv_dist_cube =
@@ -217,7 +217,7 @@ With this bug rectified, and without any further modification to the CUDA code o
 
 ```
 
-This is presumably because the tool is unsure of the equivalence of `rsqrt` and `sycl::rsqrt`. However, inspecting PTX reveals that the generated instructions are the same, so the cast to double is unnecessary. Removing the cast to double leaves a 40% performance gap between CUDA and SYCL.
+This was presumably because the tool was unaware of the equivalence of `rsqrt` and `sycl::rsqrt`. However, inspecting PTX reveals that the generated instructions are the same, so the cast to double is unnecessary. Removing the cast to double leaves a 40% performance gap between CUDA and SYCL. This is no longer necessary as newer versions of the Intel® DPC++ Compatibility Tool no longer insert the cast.
 
 The root cause of this 40% performance gap appears to be different handling of the branch instruction:
 
