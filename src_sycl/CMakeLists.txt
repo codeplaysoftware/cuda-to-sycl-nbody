@@ -62,7 +62,7 @@ else() #DPCPP
 
 	option(DPCPP_CUDA_SUPPORT "on")
 	if(DPCPP_CUDA_SUPPORT)
-		set(DEFAULT_CUDA_COMPUTE_CAPABILITY "86")
+		set(DEFAULT_CUDA_COMPUTE_CAPABILITY "50")
 		execute_process(
 			COMMAND bash -c "which nvidia-smi >/dev/null && nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -n 1 | tr -d '.'"
 			OUTPUT_VARIABLE CUDA_COMPUTE_CAPABILITY
