@@ -2,7 +2,7 @@
 // This work is licensed under the terms of the MIT license.
 // For a copy, see https://opensource.org/licenses/MIT.
 
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 #include <dpct/dpct.hpp>
 #include "simulator.dp.hpp"
 //#include <cstddef>
@@ -20,7 +20,7 @@ namespace simulation {
    void particle_interaction(ParticleData_d pPos,
                                         ParticleData_d pNextPos,
                                         ParticleData_d pVel, SimParam params,
-                                        sycl::nd_item<1> item_ct1);
+                                        const sycl::nd_item<1> &item_ct1);
 
    DiskGalaxySimulator::DiskGalaxySimulator(SimParam params_)
        : params(params_),
@@ -73,7 +73,7 @@ namespace simulation {
             auto params_ct3 = params;
 
             cgh.parallel_for<
-                dpct_kernel_name<class particle_interaction_18c029>>(
+                dpct_kernel_name<class particle_interaction_da5587>>(
                 sycl::nd_range<1>(
                     sycl::range<1>(nblocks) * sycl::range<1>(wg_size),
                     sycl::range<1>(wg_size)),
@@ -85,7 +85,7 @@ namespace simulation {
          std::swap(pos_d, pos_next_d);
       }
       /*
-      DPCT1003:4: Migrated API does not return error code. (*, 0) is inserted.
+      DPCT1003:5: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
       gpuErrchk((dpct::get_current_device().queues_wait_and_throw(), 0));
@@ -104,13 +104,13 @@ namespace simulation {
    dpct::device_ext &dev_ct1 = dpct::get_current_device();
    sycl::queue &q_ct1 = dev_ct1.default_queue();
       /*
-      DPCT1003:5: Migrated API does not return error code. (*, 0) is inserted.
+      DPCT1003:6: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
       gpuErrchk((dev_ct1.queues_wait_and_throw(), 0));
 
       /*
-      DPCT1003:6: Migrated API does not return error code. (*, 0) is inserted.
+      DPCT1003:7: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
       gpuErrchk((q_ct1
@@ -119,7 +119,7 @@ namespace simulation {
                      .wait(),
                  0));
       /*
-      DPCT1003:7: Migrated API does not return error code. (*, 0) is inserted.
+      DPCT1003:8: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
       gpuErrchk((q_ct1
@@ -128,7 +128,7 @@ namespace simulation {
                      .wait(),
                  0));
       /*
-      DPCT1003:8: Migrated API does not return error code. (*, 0) is inserted.
+      DPCT1003:9: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
       gpuErrchk((q_ct1
@@ -138,7 +138,7 @@ namespace simulation {
                  0));
 
       /*
-      DPCT1003:9: Migrated API does not return error code. (*, 0) is inserted.
+      DPCT1003:10: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
       gpuErrchk((q_ct1
@@ -147,7 +147,7 @@ namespace simulation {
                      .wait(),
                  0));
       /*
-      DPCT1003:10: Migrated API does not return error code. (*, 0) is inserted.
+      DPCT1003:11: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
       gpuErrchk((q_ct1
@@ -156,7 +156,7 @@ namespace simulation {
                      .wait(),
                  0));
       /*
-      DPCT1003:11: Migrated API does not return error code. (*, 0) is inserted.
+      DPCT1003:12: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
       gpuErrchk((q_ct1
@@ -166,7 +166,7 @@ namespace simulation {
                  0));
 
       /*
-      DPCT1003:12: Migrated API does not return error code. (*, 0) is inserted.
+      DPCT1003:13: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
       gpuErrchk((dev_ct1.queues_wait_and_throw(), 0));
@@ -177,13 +177,13 @@ namespace simulation {
    dpct::device_ext &dev_ct1 = dpct::get_current_device();
    sycl::queue &q_ct1 = dev_ct1.default_queue();
       /*
-      DPCT1003:13: Migrated API does not return error code. (*, 0) is inserted.
+      DPCT1003:14: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
       gpuErrchk((dev_ct1.queues_wait_and_throw(), 0));
 
       /*
-      DPCT1003:14: Migrated API does not return error code. (*, 0) is inserted.
+      DPCT1003:15: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
       gpuErrchk((q_ct1
@@ -191,13 +191,17 @@ namespace simulation {
                              params.numParticles * sizeof(coords_t))
                      .wait(),
                  0));
+      /*
+      DPCT1003:16: Migrated API does not return error code. (*, 0) is inserted.
+      You may need to rewrite this code.
+      */
       gpuErrchk((q_ct1
                      .memcpy(pos.y.data(), pos_d.y,
                              params.numParticles * sizeof(coords_t))
                      .wait(),
                  0));
       /*
-      DPCT1003:15: Migrated API does not return error code. (*, 0) is inserted.
+      DPCT1003:17: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
       gpuErrchk((q_ct1
@@ -207,7 +211,7 @@ namespace simulation {
                  0));
 
       /*
-      DPCT1003:16: Migrated API does not return error code. (*, 0) is inserted.
+      DPCT1003:18: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
       gpuErrchk((q_ct1
@@ -216,7 +220,7 @@ namespace simulation {
                      .wait(),
                  0));
       /*
-      DPCT1003:17: Migrated API does not return error code. (*, 0) is inserted.
+      DPCT1003:19: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
       gpuErrchk((q_ct1
@@ -225,7 +229,7 @@ namespace simulation {
                      .wait(),
                  0));
       /*
-      DPCT1003:18: Migrated API does not return error code. (*, 0) is inserted.
+      DPCT1003:20: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
       gpuErrchk((q_ct1
@@ -234,7 +238,7 @@ namespace simulation {
                      .wait(),
                  0));
       /*
-      DPCT1003:19: Migrated API does not return error code. (*, 0) is inserted.
+      DPCT1003:21: Migrated API does not return error code. (*, 0) is inserted.
       You may need to rewrite this code.
       */
       gpuErrchk((dev_ct1.queues_wait_and_throw(), 0));
@@ -298,7 +302,7 @@ namespace simulation {
    void particle_interaction(ParticleData_d pPos,
                                         ParticleData_d pNextPos,
                                         ParticleData_d pVel, SimParam params,
-                                        sycl::nd_item<1> item_ct1) {
+                                        const sycl::nd_item<1> &item_ct1) {
       int id = item_ct1.get_local_id(0) +
                (item_ct1.get_group(0) * item_ct1.get_local_range(0));
       if (id >= params.numParticles) return;
@@ -312,26 +316,15 @@ namespace simulation {
          vec3 r = other_pos - pos;
          // Fast computation of 1/(|r|^3)
          coords_t dist_sqr = dot(r, r) + params.distEps;
-         coords_t inv_dist_cube =
-             sycl::rsqrt(dist_sqr * dist_sqr * dist_sqr);
+         coords_t inv_dist_cube = sycl::rsqrt(dist_sqr * dist_sqr * dist_sqr);
 
          // assume uniform unit mass
-         /*
-         DPCT1084:20: The function call has multiple migration results in
-         different template instantiations that could not be unified. You may
-         need to adjust the code.
-         */
          force += r * inv_dist_cube * (i != id);
       }
 
       // Update velocity
       vec3 curr_vel(pVel.x[id], pVel.y[id], pVel.z[id]);
       curr_vel *= params.damping;
-      /*
-      DPCT1084:21: The function call has multiple migration results in different
-      template instantiations that could not be unified. You may need to adjust
-      the code.
-      */
       curr_vel += force * params.dt * params.G;
 
       pVel.x[id] = curr_vel.x;
@@ -341,11 +334,6 @@ namespace simulation {
       // Update position (integration)
       vec3 curr_pos(pPos.x[id], pPos.y[id], pPos.z[id]);
 
-      /*
-      DPCT1084:22: The function call has multiple migration results in different
-      template instantiations that could not be unified. You may need to adjust
-      the code.
-      */
       curr_pos += curr_vel * params.dt;
       pNextPos.x[id] = curr_pos.x;
       pNextPos.y[id] = curr_pos.y;

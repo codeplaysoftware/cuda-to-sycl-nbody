@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 #include <dpct/dpct.hpp>
 #include <stdio.h>
 
@@ -21,7 +21,8 @@
 
 #define gpuErrchk(ans) \
    { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(int code, const char *file, int line, bool abort = true) {
+inline void gpuAssert(dpct::err0 code, const char *file, int line,
+                      bool abort = true) {
 }
 
 namespace simulation {
@@ -91,20 +92,17 @@ namespace simulation {
          DPCT1003:1: Migrated API does not return error code. (*, 0) is
          inserted. You may need to rewrite this code.
          */
-         gpuErrchk(
-             (x = sycl::malloc_device<simulation::coords_t>(n, q_ct1), 0));
+         gpuErrchk((x = sycl::malloc_device<coords_t>(n, q_ct1), 0));
          /*
          DPCT1003:2: Migrated API does not return error code. (*, 0) is
          inserted. You may need to rewrite this code.
          */
-         gpuErrchk(
-             (y = sycl::malloc_device<simulation::coords_t>(n, q_ct1), 0));
+         gpuErrchk((y = sycl::malloc_device<coords_t>(n, q_ct1), 0));
          /*
          DPCT1003:3: Migrated API does not return error code. (*, 0) is
          inserted. You may need to rewrite this code.
          */
-         gpuErrchk(
-             (z = sycl::malloc_device<simulation::coords_t>(n, q_ct1), 0));
+         gpuErrchk((z = sycl::malloc_device<coords_t>(n, q_ct1), 0));
       };
    };
 
