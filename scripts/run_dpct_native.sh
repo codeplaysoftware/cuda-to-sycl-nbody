@@ -21,8 +21,7 @@ export NBODY_DIR=$PWD
 cd $NBODY_DIR
 
 rm src_sycl/*.[ch]pp src_sycl/*.yaml
-cp -r src/*[ch]pp src_sycl/
-#cp -r src/*cpp src_sycl/
+cd src_sycl; ln -s ../src/*[ch]pp .; cd -
 
 dpct --out-root=./src_sycl \
     --assume-nd-range-dim=1 \

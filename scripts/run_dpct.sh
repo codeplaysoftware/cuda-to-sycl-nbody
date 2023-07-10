@@ -17,11 +17,10 @@
 # headers when calling dpct with `--use-custom-helper=none`.
 
 rm src_sycl/*.[ch]pp src_sycl/*.yaml
-cp -r src/*[ch]pp src_sycl/
-#cp -r src/*cpp src_sycl/
+cd src_sycl; ln -s ../src/*[ch]pp .; cd -
 
 docker run --rm \
-    -v /opt/intel/oneapi/dpcpp-ct/2022.0.0/:/dpcpp-ct \
+    -v /opt/intel/oneapi/dpcpp-ct/2023.1.0/:/dpcpp-ct \
     -v $PWD:/nbody/ \
     -u $UID \
     -it joeatodd/onednn-cuda \
