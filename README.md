@@ -136,7 +136,7 @@ The equation solved by this code is equivalent to Eq. 1 [here](http://www.schola
 
 The force vector on each particle (F) is the sum of gravitational forces from all other particles. For each particle interaction, the attractive force is inversely proportional to the square distance between them. This force is equal to the gravitational constant (`G`) multiplied by the unit vector pointing between the particles, divided by the square of this distance. The equation above has this last term slightly rearranged to avoid unnecessary computation.
 
-Given the assumption of unit mass, the force (F) is equal to the acceleration, and so at each timestep, the force vector F is simpy added to the velocity vector. The position of each particle is updated by the velocity multiplied by the timestep size (`dt`).
+Given the assumption of unit mass, the force (F) is equal to the acceleration, and so at each timestep, the force vector F is multiplied by the timestep size (`dt`) and added to the velocity vector. The position of each particle is then updated by the velocity multiplied by the timestep size (`dt`).
 
 A drag factor (`damping`) is used to regulate the velocity. At each timestep, the velocity is multiplied by the drag term, slowing the particles. The maximum force between very close particles is also limited for stability; this is achieved via an epsilon term (`distEps`) which is added to the distance between each particle pairing.
 
@@ -167,7 +167,7 @@ Each particle is rendered as a fixed-size flare, generated from a gaussian. Part
 
 #### Bloom
 
-Bloom is applied through a seperable Gaussian blur, applied once in the horizontal and then the vertical direction. The 1D Gaussian kernel is computed by `RendererGL::gaussKernel` and optimized to minimize texel lookups by `RendererGL::optimGaussKernel` following [this guide](https://www.rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/). At present, a gaussian window of 49 pixels with sigma = 10.0 is used. Multiple passes are possible (ping pong between two RGBA16F frame buffers), though at present we execute only one blur in each direction.
+Bloom is applied through a separable Gaussian blur, applied once in the horizontal and then the vertical direction. The 1D Gaussian kernel is computed by `RendererGL::gaussKernel` and optimized to minimize texel lookups by `RendererGL::optimGaussKernel` following [this guide](https://www.rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/). At present, a gaussian window of 49 pixels with sigma = 10.0 is used. Multiple passes are possible (ping pong between two RGBA16F frame buffers), though at present we execute only one blur in each direction.
 
 Note that unlike typical bloom processing, there is no extraction of bright light sources prior to blurring, because the scene (bright stars on a dark background) makes this obsolete.
 
@@ -199,7 +199,7 @@ We've previously discussed the desire for a simulation which is *visibly* slower
 
 Firstly, the number of particles (`numParticles` [above](#Simulation)) has a large effect on the simulation time, as the computation scales with O(n<sup>2</sup>). By default, 12.8k particles (50 * 256) are rendered, but increasing this to 64k particles (250 * 256), the simulation time increases from 10ms to ~170ms.
 
-Alternatively, simulation time can be arbitrarily raised or lowered by changing both timestep size (`dt` [above](#Simulation)) and simultion steps per rendered frame (`simIterationsPerFrame`, [above](#Simulation)). By default, a timestep size of 0.005 is used, and 4 simulation steps are taken per rendered frame (Note that `scripts/xvfb.sh` overrides these default values with `dt = 0.001` and `simIterationsPerFrame = 5`).
+Alternatively, simulation time can be arbitrarily raised or lowered by changing both timestep size (`dt` [above](#Simulation)) and simulation steps per rendered frame (`simIterationsPerFrame`, [above](#Simulation)). By default, a timestep size of 0.005 is used, and 4 simulation steps are taken per rendered frame (Note that `scripts/xvfb.sh` overrides these default values with `dt = 0.001` and `simIterationsPerFrame = 5`).
 
 To increase the simulation time by a factor of 5, for example, simply divide `dt` by 5 and multiply `simIterationsPerFrame` by 5. This will produce *almost* identical output. Take care with *increasing* `dt` to get the opposite effect; above a certain value, the simulation will become unstable & you may see this manifest as unphysical behaviour (very fast moving stars exploding out from the centre). Instability at large `dt` can be mitigated, to an extent, by increasing `distEps` or `damping`.
 
@@ -224,7 +224,7 @@ The root cause of this 40% performance gap appears to be different handling of t
 ```
 if (i == id) continue;
 ```
-in the main loop in simulation.dp.cpp. Whereas NVCC handles this via instruction predication, DPC++ generates branch & sync instructions. By replacing this branch instruction with an arithemtic:
+in the main loop in simulation.dp.cpp. Whereas NVCC handles this via instruction predication, DPC++ generates branch & sync instructions. By replacing this branch instruction with an arithmetic expression:
 
 ```
 force += r * inv_dist_cube * (i != id);
