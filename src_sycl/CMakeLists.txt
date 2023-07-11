@@ -60,7 +60,7 @@ else() #DPCPP
 		message( FATAL_ERROR "Invalid C++ compiler for SYCL compilation" )
 	endif()
 
-	option(DPCPP_CUDA_SUPPORT "on")
+	option(DPCPP_CUDA_SUPPORT "Whether to enable DPC++'s CUDA backend" ON)
 	if(DPCPP_CUDA_SUPPORT)
 		set(DEFAULT_CUDA_COMPUTE_CAPABILITY "50")
 		execute_process(
