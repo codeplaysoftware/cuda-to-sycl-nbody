@@ -15,4 +15,3 @@ log*
 .vscode
 nbody_dpcpp
 nbody_cuda
-nbody_computecpp
