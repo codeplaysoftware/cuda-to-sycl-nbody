@@ -22,6 +22,11 @@ set(OPENGL_SOURCE
 	renderer_gl.cpp 
 	shader.cpp)
 
+if(NOT TARGET glm::glm)
+  add_library(glm::glm IMPORTED INTERFACE)
+  target_include_directories(glm::glm INTERFACE ${GLM_INCLUDE_DIR})
+endif()
+
 add_executable(${BINARY_NAME} ${COMMON_SOURCE} ${OPENGL_SOURCE})
 
 # COMPILER_NAME here is only used to print text overlay on simulation

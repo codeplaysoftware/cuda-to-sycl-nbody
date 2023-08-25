@@ -11,7 +11,6 @@ This nbody simulation can be run with any of:
  - CUDA
  - DPC++ CUDA backend
  - DPC++ OpenCL CPU backend
- - ComputeCpp OpenCL Backend
 
 Source code for the CUDA version is in `./src/` while `./src_sycl/` contains the semi-automatically converted SYCL code.
 
@@ -42,14 +41,11 @@ The DPC++ OpenCL backend requires an [OpenCL runtime](https://intel.github.io/ll
 
 Both DPC++ backends require the [DPC++ compiler](https://intel.github.io/llvm-docs/GetStartedGuide.html) to compile the SYCL code.
 
-The ComputeCpp backend requires the new Experimental version of the ComputeCpp compiler, which you can download from the [Codeplay website](https://developer.codeplay.com/products/computecpp/ce/download?experimental=true).
-
-
 ## Building
 
-This project uses CMake for build configuration. Build scripts for CUDA, DPC++ and ComputeCpp are located in `./scripts/`. Note that these scripts include some hardcoded paths from our dev machine, and so will not work out-the-box.
+This project uses CMake for build configuration. Build scripts for CUDA and DPC++ are located in `./scripts/`. Note that these scripts include some hardcoded paths from our dev machine, and so will not work out-the-box.
 
-The CMake option `-DBACKEND` allows to select which backend ("CUDA", "DPCPP", or "COMPUTECPP") to build. CUDA is built by default. The name of the built binary is suffixed with the backend (`nbody_cuda`, `nbody_dpcpp`, or `nbody_computecpp`).
+The CMake option `-DBACKEND` allows to select which backend ("CUDA" or "DPCPP") to build. CUDA is built by default. The name of the built binary is suffixed with the backend (`nbody_cuda` or `nbody_dpcpp`).
 
 The DPC++ backend, in turn, supports both an OpenCL & CUDA backend, both of which are built by default. If you are building on a machine without CUDA support, you can switch off the DPC++ CUDA backend with the flag `-DDPCPP_CUDA_SUPPORT=off`.
 
@@ -61,7 +57,7 @@ The Intel® DPC++ compatibility tool offers options for intercepting complex bui
 
 ## Running on different platforms
 
-The script `./scripts/run_nbody.sh` will run the nbody simulation, selecting a different binary based on the `-b` flag, where `-b` can be any of: `cuda`, `dpcpp`, `computecpp`. Subsequent positional arguments are passed on to the `nbody` binary. These positions args are described in the [Simulation](#Simulation) section. For example, to run on the DPC++ OpenCL host backend with 25600 (100 * 256) particles, executing 10 timesteps per rendered frame:
+The script `./scripts/run_nbody.sh` will run the nbody simulation, selecting a different binary based on the `-b` flag, where `-b` can be `cuda` or `dpcpp`. Subsequent positional arguments are passed on to the `nbody` binary. These positions args are described in the [Simulation](#Simulation) section. For example, to run on the DPC++ OpenCL host backend with 25600 (100 * 256) particles, executing 10 timesteps per rendered frame:
 
 ```
 ./scripts/run_nbody.sh -b dpcpp 100 10
@@ -100,18 +96,6 @@ will run on a CPU through the OpenCL backend. Note the correspondence between op
 ```
      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsycl -fsycl-targets=spir64,nvptx64-nvidia-cuda -fsycl-unnamed-lambda")
 ```
-
-### Selecting the ComputeCpp Backend
-
-By specifying the environment variable `COMPUTECPP_TARGET`, it's possible to switch between running with the OpenCL CPU, OpenCL GPU or the host backends:
-
-```
-COMPUTECPP_TARGET=host ./nbody_computecpp
-COMPUTECPP_TARGET=cpu ./nbody_computecpp
-COMPUTECPP_TARGET=gpu ./nbody_computecpp
-```
-
-Note that the ComputeCpp version will only support backends with USM support (Intel GPUs/CPUs).
 
 ### Adapting the project for DPC++ OpenCL
 
