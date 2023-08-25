@@ -53,7 +53,7 @@ if(DPCPP_CUDA_SUPPORT)
     set(CUDA_COMPUTE_CAPABILITY ${DEFAULT_CUDA_COMPUTE_CAPABILITY})
   endif()
   set(SYCL_FLAGS -fsycl
-                -fsycl-targets=spir64,nvptx64-nvidia-cuda
+                -fsycl-targets=nvptx64-nvidia-cuda,spir64
                 -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=sm_${CUDA_COMPUTE_CAPABILITY}
                 -fsycl-unnamed-lambda
                 -fgpu-inline-threshold=100000
