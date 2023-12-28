@@ -9,6 +9,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(BACKEND "CUDA" CACHE STRING "Which backend to build")
+option(RENDER "Use openGl or not" OFF)
 
 if(BACKEND STREQUAL "CUDA")
 	set(BINARY_NAME "nbody_cuda" CACHE STRING "Binary name")
@@ -21,4 +22,7 @@ else()
 	message(FATAL_ERROR "Unrecognized BACKEND")
 endif()
 
-add_subdirectory(libs/imgui)
+if(RENDER)
+	add_subdirectory(libs/imgui)
+endif()
+

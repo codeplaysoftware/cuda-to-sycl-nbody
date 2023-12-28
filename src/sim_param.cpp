@@ -10,7 +10,8 @@ SimParam::SimParam() {
    G = 2.0;
    dt = 0.005;
    numParticles = 50 * 256;
-   numFrames = SIZE_MAX;
+//   numFrames = SIZE_MAX;
+   numFrames = 1000000;
    simIterationsPerFrame = 4;
    damping = 0.999998;
    distEps = 1.0e-7;
