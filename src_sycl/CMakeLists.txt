@@ -24,23 +24,33 @@ set(OPENGL_SOURCE
 	renderer_gl.cpp 
 	shader.cpp)
 
-if(NOT TARGET glm::glm)
-	add_library(glm::glm IMPORTED INTERFACE)
-	target_include_directories(glm::glm INTERFACE ${GLM_INCLUDE_DIR})
-endif()
+set(DEBUG_FLAGS -g -O0)
 
 if (RENDER) 
 	add_executable(${BINARY_NAME} ${COMMON_SOURCE} ${OPENGL_SOURCE})
 	target_compile_definitions(${BINARY_NAME} PRIVATE -DUSE_OPENGL COMPILER_NAME="SYCL")
 	target_link_libraries(${BINARY_NAME} PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL)
+	target_compile_features(${BINARY_NAME} PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
+	target_include_directories(${BINARY_NAME} PRIVATE ${dpct_INCLUDE_DIR})
 else()
+	add_custom_target(release DEPENDS ${BINARY_NAME})
 	add_executable(${BINARY_NAME} ${COMMON_SOURCE})
 	target_compile_definitions(${BINARY_NAME} PRIVATE DISABLE_GL COMPILER_NAME="SYCL")
 	target_link_libraries(${BINARY_NAME} PRIVATE glm::glm)
+
+	add_custom_target(debug DEPENDS ${BINARY_NAME}_d)
+	add_executable(${BINARY_NAME}_d ${COMMON_SOURCE})
+	target_compile_definitions(${BINARY_NAME}_d PRIVATE DISABLE_GL COMPILER_NAME="SYCL")
+	target_link_libraries(${BINARY_NAME}_d PRIVATE glm::glm)
+	target_compile_features(${BINARY_NAME}_d PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
+	target_include_directories(${BINARY_NAME}_d PRIVATE ${dpct_INCLUDE_DIR})
 endif()
 
-target_compile_features(${BINARY_NAME} PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
-target_include_directories(${BINARY_NAME} PRIVATE ${dpct_INCLUDE_DIR})
+if(NOT TARGET glm::glm)
+	add_library(glm::glm IMPORTED INTERFACE)
+	target_include_directories(glm::glm INTERFACE ${GLM_INCLUDE_DIR})
+endif()
+
 
 if(NOT ((CMAKE_CXX_COMPILER MATCHES ".*dpcpp(\\.exe)?$") OR
 	(CMAKE_CXX_COMPILER MATCHES ".*icpx(\\.exe)?$")  OR
@@ -70,3 +80,5 @@ endif()
 
 target_compile_options(${BINARY_NAME} PRIVATE ${SYCL_FLAGS})
 target_link_options(${BINARY_NAME} PRIVATE ${SYCL_FLAGS})
+target_compile_options(${BINARY_NAME}_d PRIVATE ${SYCL_FLAGS} ${DEBUG_FLAGS})
+target_link_options(${BINARY_NAME}_d PRIVATE ${SYCL_FLAGS} ${DEBUG_FLAGS})
