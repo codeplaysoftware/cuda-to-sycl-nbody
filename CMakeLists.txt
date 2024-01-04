@@ -9,7 +9,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(BACKEND "CUDA" CACHE STRING "Which backend to build")
-option(RENDER "Use openGl or not" OFF)
+option(RENDER "Use openGl or not" ON)
 
 if(BACKEND STREQUAL "CUDA")
 	set(BINARY_NAME "nbody_cuda" CACHE STRING "Binary name")

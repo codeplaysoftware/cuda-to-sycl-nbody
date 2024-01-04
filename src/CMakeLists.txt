@@ -30,25 +30,30 @@ endif()
 
 set(DEBUG_FLAGS -g -O0)
 
-if (RENDER) 
-	add_executable(${BINARY_NAME} ${COMMON_SOURCE} ${OPENGL_SOURCE})
-	# COMPILER_NAME here is only used to print text overlay on simulation
-	target_compile_definitions(${BINARY_NAME} PRIVATE -DUSE_OPENGL COMPILER_NAME="CUDA")
-	target_link_libraries(${BINARY_NAME} PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL cuda)
-else()
-	add_custom_target(release DEPENDS ${BINARY_NAME})
-	add_executable(${BINARY_NAME} ${COMMON_SOURCE})
-	target_compile_definitions(${BINARY_NAME} PRIVATE DISABLE_GL COMPILER_NAME="CUDA")
-	target_link_libraries(${BINARY_NAME} PRIVATE glm::glm cuda)
 
-	add_custom_target(debug DEPENDS ${BINARY_NAME}_d)
-	add_executable(${BINARY_NAME}_d ${COMMON_SOURCE})
-	target_compile_definitions(${BINARY_NAME}_d PRIVATE DISABLE_GL COMPILER_NAME="CUDA")
-	target_link_libraries(${BINARY_NAME}_d PRIVATE glm::glm cuda)
+if (RENDER) 
+	set(RENDER_LIB  glm::glm glfw PkgConfig::Glew OpenGL::OpenGL cuda)
+	set(RENDER_FLAG -DUSE_OPENGL)
+	set(SOURCE_FILES ${COMMON_SOURCE} ${OPENGL_SOURCE})
+else()
+	set(RENDER_LIB  glm::glm cuda)
+	set(RENDER_FLAG DISABLE_GL)
+	set(SOURCE_FILES ${COMMON_SOURCE})
 endif()
+
+add_custom_target(release DEPENDS ${BINARY_NAME})
+add_executable(${BINARY_NAME} ${SOURCE_FILES})
+# COMPILER_NAME here is only used to print text overlay on simulation
+target_compile_definitions(${BINARY_NAME} PRIVATE ${RENDER_FLAG} COMPILER_NAME="CUDA")
+target_link_libraries(${BINARY_NAME} PRIVATE ${RENDER_LIB})
 target_compile_features(${BINARY_NAME} PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
 target_include_directories(${BINARY_NAME} PRIVATE ${CUDA_INCLUDE_DIRS})
+
+add_custom_target(debug DEPENDS ${BINARY_NAME}_d)
+add_executable(${BINARY_NAME}_d ${SOURCE_FILES})
+# COMPILER_NAME here is only used to print text overlay on simulation
+target_compile_definitions(${BINARY_NAME}_d PRIVATE ${RENDER_FLAG} COMPILER_NAME="CUDA")
+target_link_libraries(${BINARY_NAME}_d PRIVATE ${RENDER_LIB})
 target_compile_features(${BINARY_NAME}_d PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
 target_include_directories(${BINARY_NAME}_d PRIVATE ${CUDA_INCLUDE_DIRS})
 target_compile_options(${BINARY_NAME}_d PRIVATE ${DEBUG_FLAGS})
-
