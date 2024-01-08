@@ -18,6 +18,8 @@ Source code for the CUDA version is in `./src/` while `./src_sycl/` contains the
 
 ### Graphics Dependencies
 
+By default the build requieres OpenGL. See the **Building** section below to build without rendering.
+
 The rendering components of this code are independent of the CUDA/SYCL backend, and depend on:
  - GLM
  - GLFW
@@ -48,6 +50,12 @@ This project uses CMake for build configuration. Build scripts for CUDA and DPC+
 The CMake option `-DBACKEND` allows to select which backend ("CUDA" or "DPCPP") to build. CUDA is built by default. The name of the built binary is suffixed with the backend (`nbody_cuda` or `nbody_dpcpp`).
 
 The DPC++ backend, in turn, supports both an OpenCL & CUDA backend, both of which are built by default. If you are building on a machine without CUDA support, you can switch off the DPC++ CUDA backend with the flag `-DDPCPP_CUDA_SUPPORT=off`.
+
+The build scripts create a version that includes rendering. To build versions that do not require OpenGL, provide the argument **no_render** to the build scripts.
+
+By default, a **release** target is built, for example, `nbody_cuda`. To build a debug version, navigate to the build directory and execute **make debug**. Running **make** will build both versions. The debug binary will share the same name as the **release** version with "_d" appended.
+
+The provided `tasks.json` and `launch.json` configuration files for vscode serve as examples, demonstrating how to initiate a debug session directly from within vscode.
 
 ## Migrating CUDA to SYCL
 
