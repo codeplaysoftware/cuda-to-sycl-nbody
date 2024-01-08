@@ -15,7 +15,7 @@
 				"$gcc"
 			],
 			"group": "build",
-			"detail": "compiler: /opt/slurm/intel/oneapi/2024.0.0.49397/compiler/2024.0/bin/icpx"
+			"detail": "compiler: INTEL oneapi icpx"
 		},
 		{
 			"type": "cppbuild",
@@ -31,7 +31,7 @@
 				"$gcc"
 			],
 			"group": "build",
-			"detail": "compiler: /opt/slurm/intel/oneapi/2024.0.0.49397/compiler/2024.0/bin/icpx"
+			"detail": "compiler: INTEL oneapi icpx"
 		},
 		{
 			"type": "cppbuild",
@@ -47,7 +47,7 @@
 				"$gcc"
 			],
 			"group": "build",
-			"detail": "compiler: /opt/slurm/intel/oneapi/2024.0.0.49397/compiler/2024.0/bin/icpx"
+			"detail": "compiler: INTEL oneapi icpx"
 		},
 		{
 			"type": "cppbuild",
@@ -63,7 +63,7 @@
 				"$gcc"
 			],
 			"group": "build",
-			"detail": "compiler: /opt/slurm/intel/oneapi/2024.0.0.49397/compiler/2024.0/bin/icpx"
+			"detail": "compiler: INTEL oneapi icpx"
 		}
 	]
 }

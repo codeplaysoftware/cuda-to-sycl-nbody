@@ -76,14 +76,15 @@ if(DPCPP_CUDA_SUPPORT)
 		-fsycl-targets=nvptx64-nvidia-cuda,spir64
 		-Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=sm_${CUDA_COMPUTE_CAPABILITY}
 		-fsycl-unnamed-lambda
-		-fgpu-inline-threshold=100000
-		-Ofast)
+		-fgpu-inline-threshold=100000)
+        set(OPT_FLAGS -Ofast)
 else()
 	set(SYCL_FLAGS -fsycl -fsycl-targets=spir64 -fsycl-unnamed-lambda)
+        set(OPT_FLAGS)
 endif()
 
-target_compile_options(${BINARY_NAME} PRIVATE ${SYCL_FLAGS})
-target_link_options(${BINARY_NAME} PRIVATE ${SYCL_FLAGS})
+target_compile_options(${BINARY_NAME} PRIVATE ${SYCL_FLAGS} ${OPT_FLAGS})
+target_link_options(${BINARY_NAME} PRIVATE ${SYCL_FLAGS} ${OPT_FLAGS})
 
 target_compile_options(${BINARY_NAME}_d PRIVATE ${SYCL_FLAGS} ${DEBUG_FLAGS})
 target_link_options(${BINARY_NAME}_d PRIVATE ${SYCL_FLAGS} ${DEBUG_FLAGS})

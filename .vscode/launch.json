@@ -1,17 +1,13 @@
 {
     "configurations": [
         {
-            "comments": [
-                "Full launch.json configuration details can be found here:",
-                "https://code.visualstudio.com/docs/cpp/launch-json-reference"
-            ],
             "name": "DEBUG: (gdb-oneapi) nbody_dpcpp_d Launch",
             "type": "cppdbg",
             "request": "launch",
             "preLaunchTask": "Debug C/C++: DPCPP Makefile",
             "postDebugTask": "",
-            "program": "/home/pablo/src/n-body/cuda-to-sycl-nbody/nbody_dpcpp_d",
-            "args": [],
+            "program": "${workspaceFolder}/nbody_dpcpp_d",
+            "args": ["50", "4", "0.999998", "0.005", "1.0e-7", "2.0", "100000"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [
@@ -46,17 +42,13 @@
             ]
         },
         {
-            "comments": [
-                "Full launch.json configuration details can be found here:",
-                "https://code.visualstudio.com/docs/cpp/launch-json-reference"
-            ],
             "name": "DEBUG: (cuda-gdb) nbody_cuda_d Launch",
             "type": "cuda-gdb",
             "request": "launch",
             "preLaunchTask": "Debug C/C++: CUDA Makefile",
             "postDebugTask": "",
-            "program": "/home/pablo/src/n-body/cuda-to-sycl-nbody/nbody_cuda_d",
-            "args": [],
+            "program": "${workspaceFolder}/nbody_cuda_d",
+            "args": "50 4 0.999998 0.005 1.0e-7 2.0 100000",
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
         }
