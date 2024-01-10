@@ -4,41 +4,41 @@
 find_package(PkgConfig REQUIRED)
 
 if (RENDER) 
-	pkg_check_modules(Glew REQUIRED IMPORTED_TARGET glew)
+  pkg_check_modules(Glew REQUIRED IMPORTED_TARGET glew)
 
-	find_package(glm REQUIRED)
-	find_package(glfw3 REQUIRED)
-	find_package(OpenGL REQUIRED)
+  find_package(glm REQUIRED)
+  find_package(glfw3 REQUIRED)
+  find_package(OpenGL REQUIRED)
 endif()
 
 find_package(CUDA REQUIRED)
 
 set(COMMON_SOURCE 
-	nbody.cpp 
-	camera.cpp 
-	sim_param.cpp 
-	gen.cpp 
-	simulator.cu)
+  nbody.cpp 
+  camera.cpp 
+  sim_param.cpp 
+  gen.cpp 
+  simulator.cu)
 set(OPENGL_SOURCE 
-	renderer_gl.cpp 
-	shader.cpp)
+  renderer_gl.cpp 
+  shader.cpp)
 
 if(NOT TARGET glm::glm)
-	add_library(glm::glm IMPORTED INTERFACE)
-	target_include_directories(glm::glm INTERFACE ${GLM_INCLUDE_DIR})
+  add_library(glm::glm IMPORTED INTERFACE)
+  target_include_directories(glm::glm INTERFACE ${GLM_INCLUDE_DIR})
 endif()
 
 set(DEBUG_FLAGS -g -O0)
 
 
 if (RENDER) 
-	set(RENDER_LIB  glm::glm glfw PkgConfig::Glew OpenGL::OpenGL cuda)
-	set(RENDER_FLAG -DUSE_OPENGL)
-	set(SOURCE_FILES ${COMMON_SOURCE} ${OPENGL_SOURCE})
+  set(RENDER_LIB  glm::glm glfw PkgConfig::Glew OpenGL::OpenGL cuda)
+  set(RENDER_FLAG -DUSE_OPENGL)
+  set(SOURCE_FILES ${COMMON_SOURCE} ${OPENGL_SOURCE})
 else()
-	set(RENDER_LIB  glm::glm cuda)
-	set(RENDER_FLAG DISABLE_GL)
-	set(SOURCE_FILES ${COMMON_SOURCE})
+  set(RENDER_LIB  glm::glm cuda)
+  set(RENDER_FLAG DISABLE_GL)
+  set(SOURCE_FILES ${COMMON_SOURCE})
 endif()
 
 add_custom_target(release DEPENDS ${BINARY_NAME})
