@@ -14,6 +14,8 @@ target_link_libraries(imgui PRIVATE dl)
 target_include_directories(imgui PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 
 target_include_directories(${BINARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_include_directories(${BINARY_NAME}_d PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
 
 # Link main project to imgui lib
 target_link_libraries(${BINARY_NAME} PRIVATE imgui)
+target_link_libraries(${BINARY_NAME}_d PRIVATE imgui)

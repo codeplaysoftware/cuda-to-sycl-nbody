@@ -15,3 +15,5 @@ log*
 .vscode
 nbody_dpcpp
 nbody_cuda
+nbody_cuda_d
+nbody_dpcpp_d

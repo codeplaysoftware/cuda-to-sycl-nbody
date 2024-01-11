@@ -1,0 +1,69 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "Debug C/C++: CUDA Makefile",
+			"command": "make",
+			"args": [
+				"debug",
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/build_cuda"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build",
+			"detail": "compiler: INTEL oneapi icpx"
+		},
+		{
+			"type": "cppbuild",
+			"label": "Release C/C++: CUDA Makefile",
+			"command": "make",
+			"args": [
+				"release"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/build_cuda"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build",
+			"detail": "compiler: INTEL oneapi icpx"
+		},
+		{
+			"type": "cppbuild",
+			"label": "Release C/C++: DPCPP Makefile",
+			"command": "make",
+			"args": [
+				"release"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}build_dpcpp"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build",
+			"detail": "compiler: INTEL oneapi icpx"
+		},
+		{
+			"type": "cppbuild",
+			"label": "Debug C/C++: DPCPP Makefile",
+			"command": "make",
+			"args": [
+				"debug"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/build_dpcpp"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build",
+			"detail": "compiler: INTEL oneapi icpx"
+		}
+	]
+}

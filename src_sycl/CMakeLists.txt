@@ -3,42 +3,62 @@
 
 find_package(PkgConfig REQUIRED)
 
-pkg_check_modules(Glew REQUIRED IMPORTED_TARGET glew)
+if (RENDER) 
+  pkg_check_modules(Glew REQUIRED IMPORTED_TARGET glew)
 
-find_package(glm REQUIRED)
-find_package(glfw3 REQUIRED)
-find_package(OpenGL REQUIRED)
+  find_package(glm REQUIRED)
+  find_package(glfw3 REQUIRED)
+  find_package(OpenGL REQUIRED)
+endif()
+
 find_package(dpct REQUIRED)
 
 set(COMMON_SOURCE 
-	nbody.cpp 
-	camera.cpp 
-	sim_param.cpp 
-	gen.cpp 
-	simulator.dp.cpp)
+  nbody.cpp 
+  sim_param.cpp 
+  simulator.dp.cpp)
 
 set(OPENGL_SOURCE 
-	renderer_gl.cpp 
-	shader.cpp)
+  gen.cpp 
+  camera.cpp 
+  renderer_gl.cpp 
+  shader.cpp)
 
-add_executable(${BINARY_NAME} ${COMMON_SOURCE} ${OPENGL_SOURCE})
+set(DEBUG_FLAGS -g -O0)
 
-target_compile_definitions(${BINARY_NAME} PRIVATE -DUSE_OPENGL COMPILER_NAME="SYCL")
+if (RENDER) 
+  set(RENDER_LIB glm::glm glfw PkgConfig::Glew OpenGL::OpenGL)
+  set(RENDER_FLAG -DUSE_OPENGL)
+  set(SOURCE_FILES ${COMMON_SOURCE} ${OPENGL_SOURCE})
+else()
+  set(RENDER_LIB)
+  set(RENDER_FLAG DISABLE_GL)
+  set(SOURCE_FILES ${COMMON_SOURCE})
+endif()
 
+add_custom_target(release DEPENDS ${BINARY_NAME})
+add_executable(${BINARY_NAME} ${SOURCE_FILES})
+target_compile_definitions(${BINARY_NAME} PRIVATE ${RENDER_FLAG} COMPILER_NAME="SYCL")
+target_link_libraries(${BINARY_NAME} PRIVATE ${RENDER_LIB})
 target_compile_features(${BINARY_NAME} PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
-
 target_include_directories(${BINARY_NAME} PRIVATE ${dpct_INCLUDE_DIR})
+
+add_custom_target(debug DEPENDS ${BINARY_NAME}_d)
+add_executable(${BINARY_NAME}_d ${SOURCE_FILES})
+target_compile_definitions(${BINARY_NAME}_d PRIVATE ${RENDER_FLAG} COMPILER_NAME="SYCL")
+target_link_libraries(${BINARY_NAME}_d PRIVATE ${RENDER_LIB})
+target_compile_features(${BINARY_NAME}_d PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
+target_include_directories(${BINARY_NAME}_d PRIVATE ${dpct_INCLUDE_DIR})
 
 if(NOT TARGET glm::glm)
   add_library(glm::glm IMPORTED INTERFACE)
   target_include_directories(glm::glm INTERFACE ${GLM_INCLUDE_DIR})
 endif()
 
-target_link_libraries(${BINARY_NAME} PRIVATE glm::glm glfw PkgConfig::Glew OpenGL::OpenGL)
 
 if(NOT ((CMAKE_CXX_COMPILER MATCHES ".*dpcpp(\\.exe)?$") OR
-              (CMAKE_CXX_COMPILER MATCHES ".*icpx(\\.exe)?$")  OR
-              (CMAKE_CXX_COMPILER MATCHES ".*clang\\+\\+(\\.exe)?$")))
+  (CMAKE_CXX_COMPILER MATCHES ".*icpx(\\.exe)?$")  OR
+  (CMAKE_CXX_COMPILER MATCHES ".*clang\\+\\+(\\.exe)?$")))
   message( FATAL_ERROR "Invalid C++ compiler for SYCL compilation" )
 endif()
 
@@ -53,14 +73,18 @@ if(DPCPP_CUDA_SUPPORT)
     set(CUDA_COMPUTE_CAPABILITY ${DEFAULT_CUDA_COMPUTE_CAPABILITY})
   endif()
   set(SYCL_FLAGS -fsycl
-                -fsycl-targets=nvptx64-nvidia-cuda,spir64
-                -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=sm_${CUDA_COMPUTE_CAPABILITY}
-                -fsycl-unnamed-lambda
-                -fgpu-inline-threshold=100000
-                -Ofast)
+    -fsycl-targets=nvptx64-nvidia-cuda,spir64
+    -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=sm_${CUDA_COMPUTE_CAPABILITY}
+    -fsycl-unnamed-lambda
+    -fgpu-inline-threshold=100000)
+  set(OPT_FLAGS -Ofast)
 else()
   set(SYCL_FLAGS -fsycl -fsycl-targets=spir64 -fsycl-unnamed-lambda)
+  set(OPT_FLAGS)
 endif()
 
-target_compile_options(${BINARY_NAME} PRIVATE ${SYCL_FLAGS})
-target_link_options(${BINARY_NAME} PRIVATE ${SYCL_FLAGS})
+target_compile_options(${BINARY_NAME} PRIVATE ${SYCL_FLAGS} ${OPT_FLAGS})
+target_link_options(${BINARY_NAME} PRIVATE ${SYCL_FLAGS} ${OPT_FLAGS})
+
+target_compile_options(${BINARY_NAME}_d PRIVATE ${SYCL_FLAGS} ${DEBUG_FLAGS})
+target_link_options(${BINARY_NAME}_d PRIVATE ${SYCL_FLAGS} ${DEBUG_FLAGS})
