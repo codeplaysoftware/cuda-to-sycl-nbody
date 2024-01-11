@@ -15,11 +15,11 @@ find_package(CUDA REQUIRED)
 
 set(COMMON_SOURCE 
   nbody.cpp 
-  camera.cpp 
   sim_param.cpp 
-  gen.cpp 
   simulator.cu)
 set(OPENGL_SOURCE 
+  camera.cpp 
+  gen.cpp 
   renderer_gl.cpp 
   shader.cpp)
 
@@ -36,7 +36,7 @@ if (RENDER)
   set(RENDER_FLAG -DUSE_OPENGL)
   set(SOURCE_FILES ${COMMON_SOURCE} ${OPENGL_SOURCE})
 else()
-  set(RENDER_LIB  glm::glm cuda)
+  set(RENDER_LIB  cuda)
   set(RENDER_FLAG DISABLE_GL)
   set(SOURCE_FILES ${COMMON_SOURCE})
 endif()

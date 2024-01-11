@@ -15,12 +15,12 @@ find_package(dpct REQUIRED)
 
 set(COMMON_SOURCE 
   nbody.cpp 
-  camera.cpp 
   sim_param.cpp 
-  gen.cpp 
   simulator.dp.cpp)
 
 set(OPENGL_SOURCE 
+  gen.cpp 
+  camera.cpp 
   renderer_gl.cpp 
   shader.cpp)
 
@@ -31,7 +31,7 @@ if (RENDER)
   set(RENDER_FLAG -DUSE_OPENGL)
   set(SOURCE_FILES ${COMMON_SOURCE} ${OPENGL_SOURCE})
 else()
-  set(RENDER_LIB glm::glm)
+  set(RENDER_LIB)
   set(RENDER_FLAG DISABLE_GL)
   set(SOURCE_FILES ${COMMON_SOURCE})
 endif()

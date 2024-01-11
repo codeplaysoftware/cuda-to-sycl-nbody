@@ -10,17 +10,18 @@
 
 #include "renderer_gl.hpp"
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include "camera.hpp"
+#include "gen.hpp"
+#else
+#include <cmath>
 #endif
 
-#include <glm/glm.hpp>
-#include <iostream>
 #include <thread>
 #include <vector>
 #include <numeric>
 #include <algorithm>
 
-#include "camera.hpp"
-#include "gen.hpp"
 #include "sim_param.hpp"
 #include "simulator.dp.hpp"
 
