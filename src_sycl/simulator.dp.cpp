@@ -71,41 +71,28 @@ You may need to rewrite this code.
     // dpct.
     auto start = std::chrono::steady_clock::now();
     for (size_t i = 0; i < params.simIterationsPerFrame; i++) {
-      if ( getUseBranch() ) {
-        dpct::get_default_queue().submit([&](sycl::handler &cgh) {
-            auto pos_d_ct0 = pos_d;
-            auto pos_next_d_ct1 = pos_next_d;
-            auto vel_d_ct2 = vel_d;
-            auto params_ct3 = params;
+      dpct::get_default_queue().submit([&](sycl::handler &cgh) {
+          auto pos_d_ct0 = pos_d;
+          auto pos_next_d_ct1 = pos_next_d;
+          auto vel_d_ct2 = vel_d;
+          auto params_ct3 = params;
 
-            cgh.parallel_for<
-            dpct_kernel_name<class particle_interaction_da5587>>(
-                sycl::nd_range<1>(
-                  sycl::range<1>(nblocks) * sycl::range<1>(wg_size),
-                  sycl::range<1>(wg_size)),
-                [=](sycl::nd_item<1> item_ct1) {
-                particle_interaction_b(pos_d_ct0, pos_next_d_ct1, vel_d_ct2,
-                    params_ct3, item_ct1);
-                });
-            });
-      } else {
-        dpct::get_default_queue().submit([&](sycl::handler &cgh) {
-            auto pos_d_ct0 = pos_d;
-            auto pos_next_d_ct1 = pos_next_d;
-            auto vel_d_ct2 = vel_d;
-            auto params_ct3 = params;
-
-            cgh.parallel_for<
-            dpct_kernel_name<class particle_interaction_da5588>>(
-                sycl::nd_range<1>(
-                  sycl::range<1>(nblocks) * sycl::range<1>(wg_size),
-                  sycl::range<1>(wg_size)),
-                [=](sycl::nd_item<1> item_ct1) {
-                particle_interaction_nb(pos_d_ct0, pos_next_d_ct1, vel_d_ct2,
-                    params_ct3, item_ct1);
-                });
-            });
-      }
+          auto useBranch = getUseBranch();
+          cgh.parallel_for<
+          dpct_kernel_name<class particle_interaction_da5588>>(
+              sycl::nd_range<1>(
+                sycl::range<1>(nblocks) * sycl::range<1>(wg_size),
+                sycl::range<1>(wg_size)),
+              [=](sycl::nd_item<1> item_ct1) {
+              if ( useBranch ) {
+              particle_interaction_b(pos_d_ct0, pos_next_d_ct1, vel_d_ct2,
+                  params_ct3, item_ct1);
+              } else {
+              particle_interaction_nb(pos_d_ct0, pos_next_d_ct1, vel_d_ct2,
+                  params_ct3, item_ct1);
+              }
+              });
+          });
       std::swap(pos_d, pos_next_d);
     }
     /*
