@@ -77,22 +77,28 @@ You may need to rewrite this code.
           auto vel_d_ct2 = vel_d;
           auto params_ct3 = params;
 
-          auto useBranch = getUseBranch();
+          if ( getUseBranch() ) {
           cgh.parallel_for<
           dpct_kernel_name<class particle_interaction_da5588>>(
               sycl::nd_range<1>(
                 sycl::range<1>(nblocks) * sycl::range<1>(wg_size),
                 sycl::range<1>(wg_size)),
               [=](sycl::nd_item<1> item_ct1) {
-              if ( useBranch ) {
               particle_interaction_b(pos_d_ct0, pos_next_d_ct1, vel_d_ct2,
                   params_ct3, item_ct1);
-              } else {
+              });
+          } else {
+          cgh.parallel_for<
+          dpct_kernel_name<class particle_interaction_da5589>>(
+              sycl::nd_range<1>(
+                sycl::range<1>(nblocks) * sycl::range<1>(wg_size),
+                sycl::range<1>(wg_size)),
+              [=](sycl::nd_item<1> item_ct1) {
               particle_interaction_nb(pos_d_ct0, pos_next_d_ct1, vel_d_ct2,
                   params_ct3, item_ct1);
-              }
               });
-          });
+          }
+      });
       std::swap(pos_d, pos_next_d);
     }
     /*
