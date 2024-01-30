@@ -5,6 +5,11 @@
 
 #include <cstdlib>
 
+enum class CalculationMethod {
+  BRANCH,
+  PREDICATED
+};
+
 /**
  * Simulation parameters
  */
@@ -31,5 +36,5 @@ class SimParam {
                     ///< no damping)
     float distEps;  ///< Minimum distance to limit gravity of very close particles
     int gwSize;                  ///< Work group size
-    bool useBranch;              /// Use or not branch instruction in kernel
+    CalculationMethod calcMethod;              /// Use or not branch instruction in kernel
 };

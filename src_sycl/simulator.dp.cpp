@@ -17,15 +17,11 @@
 namespace simulation {
 
   // Forward decl
-  void particle_interaction_b(ParticleData_d pPos,
-      ParticleData_d pNextPos,
-      ParticleData_d pVel, SimParam params,
-      const sycl::nd_item<1> &item_ct1);
-
-  void particle_interaction_nb(ParticleData_d pPos,
-      ParticleData_d pNextPos,
-      ParticleData_d pVel, SimParam params,
-      const sycl::nd_item<1> &item_ct1);
+  template <CalculationMethod ct>
+    void particle_interaction(ParticleData_d pPos,
+        ParticleData_d pNextPos,
+        ParticleData_d pVel, SimParam params,
+        const sycl::nd_item<1> &item_ct1);
 
   DiskGalaxySimulator::DiskGalaxySimulator(SimParam params_)
     : params(params_),
@@ -77,14 +73,14 @@ You may need to rewrite this code.
           auto vel_d_ct2 = vel_d;
           auto params_ct3 = params;
 
-          if ( getUseBranch() ) {
+          if ( getCM() == CalculationMethod::BRANCH ) {
           cgh.parallel_for<
           dpct_kernel_name<class particle_interaction_da5588>>(
               sycl::nd_range<1>(
                 sycl::range<1>(nblocks) * sycl::range<1>(wg_size),
                 sycl::range<1>(wg_size)),
               [=](sycl::nd_item<1> item_ct1) {
-              particle_interaction_b(pos_d_ct0, pos_next_d_ct1, vel_d_ct2,
+              particle_interaction<CalculationMethod::BRANCH>(pos_d_ct0, pos_next_d_ct1, vel_d_ct2,
                   params_ct3, item_ct1);
               });
           } else {
@@ -94,7 +90,7 @@ You may need to rewrite this code.
                 sycl::range<1>(nblocks) * sycl::range<1>(wg_size),
                 sycl::range<1>(wg_size)),
               [=](sycl::nd_item<1> item_ct1) {
-              particle_interaction_nb(pos_d_ct0, pos_next_d_ct1, vel_d_ct2,
+              particle_interaction<CalculationMethod::PREDICATED>(pos_d_ct0, pos_next_d_ct1, vel_d_ct2,
                   params_ct3, item_ct1);
               });
           }
@@ -316,88 +312,51 @@ You may need to rewrite this code.
   /* O(n^2) implementation (no distance threshold), with no shared
      memory etc.
    */
-  void particle_interaction_b(ParticleData_d pPos,
-      ParticleData_d pNextPos,
-      ParticleData_d pVel, SimParam params,
-      const sycl::nd_item<1> &item_ct1) {
-    int id = item_ct1.get_local_id(0) +
-      (item_ct1.get_group(0) * item_ct1.get_local_range(0));
-    if (id >= params.numParticles) return;
+  template <CalculationMethod ct>
+    void particle_interaction(ParticleData_d pPos,
+        ParticleData_d pNextPos,
+        ParticleData_d pVel, SimParam params,
+        const sycl::nd_item<1> &item_ct1) {
+      int id = item_ct1.get_local_id(0) +
+        (item_ct1.get_group(0) * item_ct1.get_local_range(0));
+      if (id >= params.numParticles) return;
 
-    vec3 force(0.0f, 0.0f, 0.0f);
-    vec3 pos(pPos.x[id], pPos.y[id], pPos.z[id]);
-
-#pragma unroll 4
-    for (int i = 0; i < params.numParticles; i++) {
-      vec3 other_pos{pPos.x[i], pPos.y[i], pPos.z[i]};
-      vec3 r = other_pos - pos;
-      // Fast computation of 1/(|r|^3)
-      coords_t dist_sqr = dot(r, r) + params.distEps;
-      coords_t inv_dist_cube = sycl::rsqrt(dist_sqr * dist_sqr * dist_sqr);
-
-      // assume uniform unit mass
-      if (i == id) continue;
-
-      force += r * inv_dist_cube;
-    }
-
-    // Update velocity
-    vec3 curr_vel(pVel.x[id], pVel.y[id], pVel.z[id]);
-    curr_vel *= params.damping;
-    curr_vel += force * params.dt * params.G;
-
-    pVel.x[id] = curr_vel.x;
-    pVel.y[id] = curr_vel.y;
-    pVel.z[id] = curr_vel.z;
-
-    // Update position (integration)
-    vec3 curr_pos(pPos.x[id], pPos.y[id], pPos.z[id]);
-
-    curr_pos += curr_vel * params.dt;
-    pNextPos.x[id] = curr_pos.x;
-    pNextPos.y[id] = curr_pos.y;
-    pNextPos.z[id] = curr_pos.z;
-  }
-
-  void particle_interaction_nb(ParticleData_d pPos,
-      ParticleData_d pNextPos,
-      ParticleData_d pVel, SimParam params,
-      const sycl::nd_item<1> &item_ct1) {
-    int id = item_ct1.get_local_id(0) +
-      (item_ct1.get_group(0) * item_ct1.get_local_range(0));
-    if (id >= params.numParticles) return;
-
-    vec3 force(0.0f, 0.0f, 0.0f);
-    vec3 pos(pPos.x[id], pPos.y[id], pPos.z[id]);
+      vec3 force(0.0f, 0.0f, 0.0f);
+      vec3 pos(pPos.x[id], pPos.y[id], pPos.z[id]);
 
 #pragma unroll 4
-    for (int i = 0; i < params.numParticles; i++) {
-      vec3 other_pos{pPos.x[i], pPos.y[i], pPos.z[i]};
-      vec3 r = other_pos - pos;
-      // Fast computation of 1/(|r|^3)
-      coords_t dist_sqr = dot(r, r) + params.distEps;
-      coords_t inv_dist_cube = sycl::rsqrt(dist_sqr * dist_sqr * dist_sqr);
+      for (int i = 0; i < params.numParticles; i++) {
+        vec3 other_pos{pPos.x[i], pPos.y[i], pPos.z[i]};
+        vec3 r = other_pos - pos;
+        // Fast computation of 1/(|r|^3)
+        coords_t dist_sqr = dot(r, r) + params.distEps;
+        coords_t inv_dist_cube = sycl::rsqrt(dist_sqr * dist_sqr * dist_sqr);
 
-      // assume uniform unit mass
-      force += r * inv_dist_cube * ( i != id );
+        // assume uniform unit mass
+        if  constexpr(ct == CalculationMethod::BRANCH) {
+          if (i == id) continue;
+          force += r * inv_dist_cube;
+        } else  if constexpr (ct == CalculationMethod::PREDICATED) {
+          force += r * inv_dist_cube * (i == id);
+        }
+      }
+
+      // Update velocity
+      vec3 curr_vel(pVel.x[id], pVel.y[id], pVel.z[id]);
+      curr_vel *= params.damping;
+      curr_vel += force * params.dt * params.G;
+
+      pVel.x[id] = curr_vel.x;
+      pVel.y[id] = curr_vel.y;
+      pVel.z[id] = curr_vel.z;
+
+      // Update position (integration)
+      vec3 curr_pos(pPos.x[id], pPos.y[id], pPos.z[id]);
+
+      curr_pos += curr_vel * params.dt;
+      pNextPos.x[id] = curr_pos.x;
+      pNextPos.y[id] = curr_pos.y;
+      pNextPos.z[id] = curr_pos.z;
     }
-
-    // Update velocity
-    vec3 curr_vel(pVel.x[id], pVel.y[id], pVel.z[id]);
-    curr_vel *= params.damping;
-    curr_vel += force * params.dt * params.G;
-
-    pVel.x[id] = curr_vel.x;
-    pVel.y[id] = curr_vel.y;
-    pVel.z[id] = curr_vel.z;
-
-    // Update position (integration)
-    vec3 curr_pos(pPos.x[id], pPos.y[id], pPos.z[id]);
-
-    curr_pos += curr_vel * params.dt;
-    pNextPos.x[id] = curr_pos.x;
-    pNextPos.y[id] = curr_pos.y;
-    pNextPos.z[id] = curr_pos.z;
-  }
 
 }  // namespace simulation

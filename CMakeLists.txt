@@ -22,9 +22,6 @@ else()
   message(FATAL_ERROR "Unrecognized BACKEND")
 endif()
 
-#set_target_properties(${BINARY_NAME} PROPERTIES CUDA_ARCHITECTURES "50;72")
-#set_target_properties(${BINARY_NAME}_d PROPERTIES CUDA_ARCHITECTURES "50;72")
-
 if(RENDER)
   add_subdirectory(libs/imgui)
 endif()

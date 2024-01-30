@@ -16,11 +16,8 @@
 namespace simulation {
 
   // Forward decl
-  __global__ void particle_interaction_b(ParticleData_d pPos,
-      ParticleData_d pNextPos,
-      ParticleData_d pVel, SimParam params);
-
-  __global__ void particle_interaction_nb(ParticleData_d pPos,
+  template <CalculationMethod ct>
+  __global__ void particle_interaction(ParticleData_d pPos,
       ParticleData_d pNextPos,
       ParticleData_d pVel, SimParam params);
 
@@ -58,11 +55,11 @@ namespace simulation {
     // dpct.
     auto start = std::chrono::steady_clock::now();
     for (size_t i = 0; i < params.simIterationsPerFrame; i++) {
-      if ( getUseBranch() ) {
-        particle_interaction_b<<<nblocks, wg_size>>>(pos_d, pos_next_d, vel_d,
+      if ( getCM() == CalculationMethod::BRANCH ) {
+        particle_interaction<CalculationMethod::BRANCH><<<nblocks, wg_size>>>(pos_d, pos_next_d, vel_d,
             params);
       } else {
-        particle_interaction_nb<<<nblocks, wg_size>>>(pos_d, pos_next_d, vel_d,
+        particle_interaction<CalculationMethod::PREDICATED><<<nblocks, wg_size>>>(pos_d, pos_next_d, vel_d,
             params);
       }
       std::swap(pos_d, pos_next_d);
@@ -186,84 +183,49 @@ namespace simulation {
   /* O(n^2) implementation (no distance threshold), with no shared
      memory etc.
    */
-  __global__ void particle_interaction_b(ParticleData_d pPos,
-      ParticleData_d pNextPos,
-      ParticleData_d pVel, SimParam params) {
-    int id = threadIdx.x + (blockIdx.x * blockDim.x);
-    if (id >= params.numParticles) return;
+  template <CalculationMethod ct>
+    __global__ void particle_interaction(ParticleData_d pPos,
+        ParticleData_d pNextPos,
+        ParticleData_d pVel, SimParam params) {
+      int id = threadIdx.x + (blockIdx.x * blockDim.x);
+      if (id >= params.numParticles) return;
 
-    vec3 force(0.0f, 0.0f, 0.0f);
-    vec3 pos(pPos.x[id], pPos.y[id], pPos.z[id]);
-
-#pragma unroll 4
-    for (int i = 0; i < params.numParticles; i++) {
-      vec3 other_pos{pPos.x[i], pPos.y[i], pPos.z[i]};
-      vec3 r = other_pos - pos;
-      // Fast computation of 1/(|r|^3)
-      coords_t dist_sqr = dot(r, r) + params.distEps;
-      coords_t inv_dist_cube = rsqrt(dist_sqr * dist_sqr * dist_sqr);
-
-      // assume uniform unit mass
-      if ( i == id ) continue;
-
-      force += r * inv_dist_cube;
-      //         force += r * inv_dist_cube * (i == id);
-    }
-
-    // Update velocity
-    vec3 curr_vel(pVel.x[id], pVel.y[id], pVel.z[id]);
-    curr_vel *= params.damping;
-    curr_vel += force * params.dt * params.G;
-
-    pVel.x[id] = curr_vel.x;
-    pVel.y[id] = curr_vel.y;
-    pVel.z[id] = curr_vel.z;
-
-    // Update position (integration)
-    vec3 curr_pos(pPos.x[id], pPos.y[id], pPos.z[id]);
-
-    curr_pos += curr_vel * params.dt;
-    pNextPos.x[id] = curr_pos.x;
-    pNextPos.y[id] = curr_pos.y;
-    pNextPos.z[id] = curr_pos.z;
-  }
-
-  __global__ void particle_interaction_nb(ParticleData_d pPos,
-      ParticleData_d pNextPos,
-      ParticleData_d pVel, SimParam params) {
-    int id = threadIdx.x + (blockIdx.x * blockDim.x);
-    if (id >= params.numParticles) return;
-
-    vec3 force(0.0f, 0.0f, 0.0f);
-    vec3 pos(pPos.x[id], pPos.y[id], pPos.z[id]);
+      vec3 force(0.0f, 0.0f, 0.0f);
+      vec3 pos(pPos.x[id], pPos.y[id], pPos.z[id]);
 
 #pragma unroll 4
-    for (int i = 0; i < params.numParticles; i++) {
-      vec3 other_pos{pPos.x[i], pPos.y[i], pPos.z[i]};
-      vec3 r = other_pos - pos;
-      // Fast computation of 1/(|r|^3)
-      coords_t dist_sqr = dot(r, r) + params.distEps;
-      coords_t inv_dist_cube = rsqrt(dist_sqr * dist_sqr * dist_sqr);
+      for (int i = 0; i < params.numParticles; i++) {
+        vec3 other_pos{pPos.x[i], pPos.y[i], pPos.z[i]};
+        vec3 r = other_pos - pos;
+        // Fast computation of 1/(|r|^3)
+        coords_t dist_sqr = dot(r, r) + params.distEps;
+        coords_t inv_dist_cube = rsqrt(dist_sqr * dist_sqr * dist_sqr);
 
-      // assume uniform unit mass
-      force += r * inv_dist_cube * (i == id);
+        // assume uniform unit mass
+        if  constexpr(ct == CalculationMethod::BRANCH) {
+          if ( i == id ) continue;
+          force += r * inv_dist_cube;
+        } else  if constexpr (ct == CalculationMethod::PREDICATED) {
+          force += r * inv_dist_cube * (i == id);
+        }
+      }
+
+      // Update velocity
+      vec3 curr_vel(pVel.x[id], pVel.y[id], pVel.z[id]);
+      curr_vel *= params.damping;
+      curr_vel += force * params.dt * params.G;
+
+      pVel.x[id] = curr_vel.x;
+      pVel.y[id] = curr_vel.y;
+      pVel.z[id] = curr_vel.z;
+
+      // Update position (integration)
+      vec3 curr_pos(pPos.x[id], pPos.y[id], pPos.z[id]);
+
+      curr_pos += curr_vel * params.dt;
+      pNextPos.x[id] = curr_pos.x;
+      pNextPos.y[id] = curr_pos.y;
+      pNextPos.z[id] = curr_pos.z;
     }
 
-    // Update velocity
-    vec3 curr_vel(pVel.x[id], pVel.y[id], pVel.z[id]);
-    curr_vel *= params.damping;
-    curr_vel += force * params.dt * params.G;
-
-    pVel.x[id] = curr_vel.x;
-    pVel.y[id] = curr_vel.y;
-    pVel.z[id] = curr_vel.z;
-
-    // Update position (integration)
-    vec3 curr_pos(pPos.x[id], pPos.y[id], pPos.z[id]);
-
-    curr_pos += curr_vel * params.dt;
-    pNextPos.x[id] = curr_pos.x;
-    pNextPos.y[id] = curr_pos.y;
-    pNextPos.z[id] = curr_pos.z;
-  }
 }  // namespace simulation

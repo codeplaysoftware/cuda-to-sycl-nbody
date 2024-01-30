@@ -3,6 +3,9 @@
 
 #include "sim_param.hpp"
 
+#include <iostream>
+#include <string>
+#include <map>
 #include <cstdlib>
 #include <cstdint>
 
@@ -15,7 +18,23 @@ SimParam::SimParam() {
   damping = 0.999998;
   distEps = 1.0e-7;
   gwSize = 64;
-  useBranch = true;
+  calcMethod = CalculationMethod::BRANCH;
+}
+
+// Set the calculation method from the given string
+CalculationMethod getCalculationMethod(const std::string& method) {
+
+  static const std::map<std::string, CalculationMethod> methodMap = {
+    {"BRANCH", CalculationMethod::BRANCH},
+    {"PREDICATED", CalculationMethod::PREDICATED}
+  };
+
+  auto it = methodMap.find(method);
+  if (it != methodMap.end()) {
+    return it->second;
+  } else {
+    throw std::invalid_argument("Valid calculation methods are BRANCH or PREDICATED");
+  }
 }
 
 void SimParam::parseArgs(int argc, char **argv) {
@@ -43,6 +62,6 @@ void SimParam::parseArgs(int argc, char **argv) {
   // Eighth argument if existing = the work group size
   if (argc >= 9) gwSize = atoi(argv[8]);
 
-  // Ninth argument if existing = use branch instruction
-  if (argc >= 10) useBranch = (bool)atoi(argv[9]);
+  // Ninth argument if existing = the calculation method
+  if (argc >= 10) calcMethod = getCalculationMethod(argv[9]);
 }

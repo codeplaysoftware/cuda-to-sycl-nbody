@@ -134,13 +134,13 @@ A drag factor (`damping`) is used to regulate the velocity. At each timestep, th
 
 The `parameters` described in this section can all be adjusted via command line arguments, as follows:
 
-`./nbody_cuda numParticles simIterationsPerFrame damping dt distEps G numFrames gwSize useBranch`
+`./nbody_cuda numParticles simIterationsPerFrame damping dt distEps G numFrames gwSize calcMethod`
 
 Note that `numParticles` specifies the number of particles simulated, divided by blocksize (i.e. setting `numParticles` to 50 produces 50*256 particles). `simIterationsPerFrame` specifies how many steps of the simulation to take before rendering the next frame and `numFrames` specifies the total number of simulation steps before the program exits. For default values for all of these parameters, refer to `sim_param.cpp`.
 
 `gwSize`: This parameter allows changing the work group size from the default 64.
 
-`useBranch`: This parameter, with a default value of 1, selects branch instruction code. If set to 0, it uses an arithmetic expression. Refer to the [performance](#sycl-vs-cuda-performance) section for details.
+`calcMethod`: This string parameter, with a default value of BRANCH, selects branch instruction code. If set to PREDICATED, it uses an arithmetic expression. Refer to the [performance](#sycl-vs-cuda-performance) section for details.
 
 
 ### Modifying Simulation Behaviour
@@ -253,28 +253,26 @@ We have found that while this is the case for the A100 (CUDA 8.48516 ms vs. SYCL
 The code change also greatly improved the performance by 100% on the MAX 1100 GPU, dropping from 21.6555 ms to 10.7633 ms.
 Below are the best results from executing the code on the three different platforms.
 
-
-**BRANCH TRUE = Original code (useBranch = 1), BRANCH FALSE = Modified code (useBranch = 0)**
 ```
 [ext_oneapi_cuda:gpu:0] NVIDIA CUDA BACKEND, NVIDIA GeForce RTX 2060 7.5 [CUDA 12.3]
-==================== WORK GROUP SIZE 512 BRANCH TRUE ===================
+==================== WORK GROUP SIZE 512 BRANCH ========================
 CUDA - At step 10000 kernel time is 8.48516 and mean is 8.53952 and stddev is: 0.0884324
  DPC - At step 10000 kernel time is 8.23865 and mean is 8.30511 and stddev is: 0.0788344
-==================== WORK GROUP SIZE 512 BRANCH FALSE ==================
+==================== WORK GROUP SIZE 512 PREDICATED ====================
 CUDA - At step 10000 kernel time is 10.7281 and mean is 10.7601 and stddev is: 0.0630959
  DPC - At step 10000 kernel time is 8.52349 and mean is 8.5992 and stddev is: 0.078034
 
 [ext_oneapi_cuda:gpu:0] NVIDIA CUDA BACKEND, NVIDIA A100-PCIE-40GB 8.0 [CUDA 12.2]
-==================== WORK GROUP SIZE 128 BRANCH TRUE ===================
+==================== WORK GROUP SIZE 128 BRANCH ========================
 CUDA - At step 10000 kernel time is 7.95778 and mean is 7.95753 and stddev is: 0.000680384
  DPC - At step 10000 kernel time is 10.051 and mean is 10.0506 and stddev is: 0.00181166
-==================== WORK GROUP SIZE 128 BRANCH FALSE ==================
+==================== WORK GROUP SIZE 128 PREDICATED ====================
 CUDA - At step 10000 kernel time is 8.60294 and mean is 8.60151 and stddev is: 0.00077172
  DPC - At step 10000 kernel time is 7.99054 and mean is 7.99109 and stddev is: 0.0041852
 
 [ext_oneapi_level_zero:gpu:0] Intel(R) Level-Zero, Intel(R) Data Center GPU Max 1100 1.3 [1.3.26516]
-==================== WORK GROUP SIZE 32 BRANCH TRUE ===================
+==================== WORK GROUP SIZE 32 BRANCH ========================
 At step 10000 kernel time is 21.5747 and mean is 21.6555 and stddev is: 0.0734683
-==================== WORK GROUP SIZE 32 BRANCH FALSE ==================
+==================== WORK GROUP SIZE 32 PREDICATED ====================
 At step 10000 kernel time is 10.6649 and mean is 10.7633 and stddev is: 0.0507969
 ```

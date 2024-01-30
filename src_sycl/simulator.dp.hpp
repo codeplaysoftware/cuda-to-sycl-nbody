@@ -121,7 +121,7 @@ inserted. You may need to rewrite this code.
       virtual const ParticleData &getParticleVel() = 0;
       virtual float getLastStepTime() = 0;
       virtual const std::string* getDeviceName() = 0;
-      virtual bool getUseBranch() = 0;
+      virtual CalculationMethod getCM() = 0;
   };
 
   /*
@@ -146,7 +146,7 @@ Invariants:
       const ParticleData &getParticleVel();
       const std::string* getDeviceName();
       int getGwSize() { return params.gwSize; }
-      bool getUseBranch() { return params.useBranch; }
+      CalculationMethod getCM() { return params.calcMethod; }
 
     private:
       SimParam params;

@@ -137,7 +137,7 @@ Invariants:
       const ParticleData &getParticleVel();
       const std::string* getDeviceName();
       int getGwSize() { return params.gwSize; }
-      bool getUseBranch() { return params.useBranch; }
+      CalculationMethod getCM() { return params.calcMethod; }
 
     private:
       SimParam params;
