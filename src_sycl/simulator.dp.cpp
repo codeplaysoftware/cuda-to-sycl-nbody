@@ -18,7 +18,7 @@ namespace simulation {
 
   // Forward decl
   template <CalculationMethod ct>
-    void particle_interaction(ParticleData_d pPos,
+  void particle_interaction(ParticleData_d pPos,
         ParticleData_d pNextPos,
         ParticleData_d pVel, SimParam params,
         const sycl::nd_item<1> &item_ct1);
