@@ -134,9 +134,14 @@ A drag factor (`damping`) is used to regulate the velocity. At each timestep, th
 
 The `parameters` described in this section can all be adjusted via command line arguments, as follows:
 
-`./nbody_cuda numParticles simIterationsPerFrame damping dt distEps G numFrames`
+`./nbody_cuda numParticles simIterationsPerFrame damping dt distEps G numFrames gwSize calcMethod`
 
 Note that `numParticles` specifies the number of particles simulated, divided by blocksize (i.e. setting `numParticles` to 50 produces 50*256 particles). `simIterationsPerFrame` specifies how many steps of the simulation to take before rendering the next frame and `numFrames` specifies the total number of simulation steps before the program exits. For default values for all of these parameters, refer to `sim_param.cpp`.
+
+`gwSize`: This parameter allows changing the work group size from the default 64.
+
+`calcMethod`: This string parameter, with a default value of BRANCH, selects branch instruction code. If set to PREDICATED, it uses an arithmetic expression. Refer to the [performance](#sycl-vs-cuda-performance) section for details.
+
 
 ### Modifying Simulation Behaviour
 
@@ -222,3 +227,52 @@ in the main loop in simulation.dp.cpp. Whereas NVCC handles this via instruction
 force += r * inv_dist_cube * (i != id);
 ```
 in both the CUDA & SYCL code, we get comparable performance between the two using our hardware set up (RTX 3060). For 5 steps of the physical simulation (1 rendered frame) with 12,800 particles, both CUDA and SYCL take ~5.05ms (RTX 3060).
+
+## Update 2024
+
+The ability to execute the nbody code without rendering simplified the process of running the code on different platforms. The results of these executions have brought to light some issues related to the runtime and compilers. As stated before, the original code was modified by substituting:
+
+```
+    // Original code
+    if (i == id) continue;
+
+    force += r * inv_dist_cube;
+```
+
+with
+
+```
+    // Modified code
+    force += r * inv_dist_cube * (i != id);
+```
+
+in order to address the 40% decrease in SYCL performance compared to the CUDA code. With this change, the performance was almost the same for both compilers in RTX 3060.
+
+We have found that while this is the case for the A100 (CUDA 8.48516 ms vs. SYCL 8.23865 ms), it is not the same on the RTX 2060, where CUDA is heavily penalized (CUDA 10.7281 ms vs. SYCL 8.52349 ms). Even on the A100, the change lowered the CUDA performance (7.95778 ms for the original code).
+
+The code change also greatly improved the performance by 100% on the MAX 1100 GPU, dropping from 21.6555 ms to 10.7633 ms.
+Below are the best results from executing the code on the three different platforms.
+
+```
+[ext_oneapi_cuda:gpu:0] NVIDIA CUDA BACKEND, NVIDIA GeForce RTX 2060 7.5 [CUDA 12.3]
+==================== WORK GROUP SIZE 512 BRANCH ========================
+CUDA - At step 10000 kernel time is 8.48516 and mean is 8.53952 and stddev is: 0.0884324
+ DPC - At step 10000 kernel time is 8.23865 and mean is 8.30511 and stddev is: 0.0788344
+==================== WORK GROUP SIZE 512 PREDICATED ====================
+CUDA - At step 10000 kernel time is 10.7281 and mean is 10.7601 and stddev is: 0.0630959
+ DPC - At step 10000 kernel time is 8.52349 and mean is 8.5992 and stddev is: 0.078034
+
+[ext_oneapi_cuda:gpu:0] NVIDIA CUDA BACKEND, NVIDIA A100-PCIE-40GB 8.0 [CUDA 12.2]
+==================== WORK GROUP SIZE 128 BRANCH ========================
+CUDA - At step 10000 kernel time is 7.95778 and mean is 7.95753 and stddev is: 0.000680384
+ DPC - At step 10000 kernel time is 10.051 and mean is 10.0506 and stddev is: 0.00181166
+==================== WORK GROUP SIZE 128 PREDICATED ====================
+CUDA - At step 10000 kernel time is 8.60294 and mean is 8.60151 and stddev is: 0.00077172
+ DPC - At step 10000 kernel time is 7.99054 and mean is 7.99109 and stddev is: 0.0041852
+
+[ext_oneapi_level_zero:gpu:0] Intel(R) Level-Zero, Intel(R) Data Center GPU Max 1100 1.3 [1.3.26516]
+==================== WORK GROUP SIZE 32 BRANCH ========================
+At step 10000 kernel time is 21.5747 and mean is 21.6555 and stddev is: 0.0734683
+==================== WORK GROUP SIZE 32 PREDICATED ====================
+At step 10000 kernel time is 10.6649 and mean is 10.7633 and stddev is: 0.0507969
+```

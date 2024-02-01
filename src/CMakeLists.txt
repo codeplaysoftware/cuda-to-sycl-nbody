@@ -48,6 +48,7 @@ target_compile_definitions(${BINARY_NAME} PRIVATE ${RENDER_FLAG} COMPILER_NAME="
 target_link_libraries(${BINARY_NAME} PRIVATE ${RENDER_LIB})
 target_compile_features(${BINARY_NAME} PRIVATE cxx_auto_type cxx_nullptr cxx_range_for)
 target_include_directories(${BINARY_NAME} PRIVATE ${CUDA_INCLUDE_DIRS})
+target_compile_options(${BINARY_NAME} PRIVATE -use_fast_math)
 
 add_custom_target(debug DEPENDS ${BINARY_NAME}_d)
 add_executable(${BINARY_NAME}_d ${SOURCE_FILES})
