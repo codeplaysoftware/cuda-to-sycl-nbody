@@ -1,4 +1,7 @@
 # nbody
+
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/codeplaysoftware/cuda-to-sycl-nbody/badge)](https://scorecard.dev/viewer/?uri=github.com/codeplaysoftware/cuda-to-sycl-nbody)
+
 Accelerated N-body sim with OpenGL graphics & automatic CUDA->SYCL conversion using [dpct](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compatibility-tool.html).
 
 ![](http://i.imgur.com/drzi33P.jpg)
@@ -59,7 +62,7 @@ The provided `tasks.json` and `launch.json` configuration files for vscode serve
 
 ## Migrating CUDA to SYCL
 
-The script `./scripts/run_dpct.sh` calls a containerized version of the Intel® DPC++ Compatibility Tool to automatically convert the CUDA components of this project into SYCL. A docker container was used because the dev machine has an incompatible version of the CUDA driver. This should be adapted based on your environment. 
+The script `./scripts/run_dpct.sh` calls a containerized version of the Intel® DPC++ Compatibility Tool to automatically convert the CUDA components of this project into SYCL. A docker container was used because the dev machine has an incompatible version of the CUDA driver. This should be adapted based on your environment.
 
 The Intel® DPC++ compatibility tool offers options for intercepting complex builds, but current dev environment restrictions require me to run the tool inside a docker container. This complicates things, so for now I'm just doing single source conversion on the simulator.cu file.
 
@@ -186,7 +189,7 @@ The exposure of the final render is obtained from the average luminance, and the
 
 ## Running headless
 
-If you run `nbody_cuda` on a remote machine with X-forwarding, sending the rendered frames across the net will be a significant bottleneck. This can be worked around by making use of [Xvfb](https://linux.die.net/man/1/xvfb) which provides a *virtual* X display. You can then read from the memory mapped file to write to e.g. MP4 output. 
+If you run `nbody_cuda` on a remote machine with X-forwarding, sending the rendered frames across the net will be a significant bottleneck. This can be worked around by making use of [Xvfb](https://linux.die.net/man/1/xvfb) which provides a *virtual* X display. You can then read from the memory mapped file to write to e.g. MP4 output.
 
 The script `./scripts/xvfb.sh` runs `nbody_cuda` in this manner, producing a video file `output.mp4`. Note that this script will run the simulation until manually terminated.
 
